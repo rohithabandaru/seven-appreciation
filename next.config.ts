@@ -48,7 +48,6 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
-  output: "standalone",
   poweredByHeader: false,
   async headers() {
     return [
