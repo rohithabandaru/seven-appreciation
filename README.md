@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌸 Seven Appreciation — Community Platform
 
-## Getting Started
+> **"Support without attacking anyone else. Appreciate without comparing. Celebrate without competing."**
 
-First, run the development server:
+A modern, full-stack digital sanctuary designed to celebrate the journeys, artistry, and inspirational impact of ENHYPEN members (**Heeseung, Jay, Jake, Sunghoon, Sunoo, Jungwon, and Ni-ki**) with genuine positivity and respect.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## ✨ Features
+
+- **🌸 Community Appreciation Feed**: Filter posts by member or category (*Appreciation Notes, Fan Stories, Artworks, Community Discussions*). Includes content moderation and report systems.
+- **🌟 Daily Member Spotlight & Prompts**: Rotating daily member spotlight and inspiration prompts to spark positive community notes.
+- **📻 Real-Time Live Lounge (`/live`)**: Interactive fan room with member channels, live message feed, quick reaction chips, and animated floating hearts.
+- **📇 3D Holographic Photocard Binder (`/binder`)**: Interactive 3D photocard collection with tilt parallax, holographic foil effects, mystery pack opening, and personal wishlist tracking.
+- **🏆 Community-Powered Milestones (`/achievements`)**: Celebrate group achievements, music records, and member milestones together.
+- **☕ Buy Me a Coffee Integration**: Direct creator support widget integrated globally into the footer and floating UI.
+- **📱 PWA Support (Progressive Web App)**: Installable on iOS, Android, and Desktop with offline caching and native app feel.
+
+---
+
+## 🛠️ Tech Stack & Architecture
+
+- **Framework**: Next.js 16 (App Router + Turbopack)
+- **UI & Styling**: React 19, Tailwind CSS v4, Lucide React Icons
+- **Database & ORM**: PostgreSQL, Prisma ORM 7 (`@prisma/adapter-pg`)
+- **Authentication**: NextAuth.js
+- **Form Validation & Security**: Zod, Content Moderation Filter, Rate Limiting, Security Event Logger
+
+---
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+- Node.js v20+ 
+- PostgreSQL database (or `npx prisma dev` for local Prisma Postgres)
+
+### 2. Environment Variables
+Create a `.env` file in the root directory:
+
+```env
+DATABASE_URL="postgres://postgres:postgres@localhost:51214/template1?sslmode=disable"
+NEXTAUTH_SECRET="your-secret-key-here"
+NEXTAUTH_URL="http://localhost:3000"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Installation
+```bash
+# Install dependencies
+npm install
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# Start local Prisma Postgres server
+npx prisma dev --detach
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Push database schema
+npx prisma db push
 
-## Learn More
+# Start Next.js development server
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📄 License & Disclaimer
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is an **independent, unofficial fan appreciation community project**. It is not officially operated by, endorsed by, or affiliated with any management company or parent organization. All public information and media remain the property of their respective copyright owners.

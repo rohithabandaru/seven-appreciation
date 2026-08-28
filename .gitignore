@@ -17,6 +17,10 @@
 /.next/
 /out/
 
+# uploads (user-uploaded files)
+/public/uploads/*
+!/public/uploads/.gitkeep
+
 # production
 /build
 
@@ -33,9 +37,20 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# secret keys and certificates
+*.key
+*.cer
+*.crt
+*.pfx
+*.p12
+secrets.json
+*.secret
+
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma

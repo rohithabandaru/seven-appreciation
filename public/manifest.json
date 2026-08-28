@@ -1,0 +1,25 @@
+{
+  "name": "Seven Appreciation Community",
+  "short_name": "SevenAppreciation",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FFFDF9",
+  "theme_color": "#F43F5E",
+  "description": "A peaceful digital sanctuary to celebrate Heeseung, Jay, Jake, Sunghoon, Sunoo, Jungwon, and Ni-ki.",
+  "icons": [
+    {
+      "src": "/images/members/all_members.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/members/all_members.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
