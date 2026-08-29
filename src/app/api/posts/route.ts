@@ -157,7 +157,7 @@ export async function POST(req: NextRequest) {
         title: title || type,
         content,
         mediaUrl: imageUrl || null,
-        status: "pending",
+        status: "approved",
       },
       include: {
         user: {

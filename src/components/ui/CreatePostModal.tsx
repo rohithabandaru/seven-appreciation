@@ -131,6 +131,11 @@ export default function CreatePostModal({
       return;
     }
 
+    if (!session || !session.user) {
+      setModerationError('You must be signed in to create a post. Please sign in to continue.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -151,6 +156,10 @@ export default function CreatePostModal({
       });
 
       if (!res.ok) {
+        if (res.status === 401) {
+          setModerationError('You must be signed in to create a post. Please sign in to continue.');
+          return;
+        }
         const errorData = await res.json().catch(() => ({}));
         setModerationError(errorData.error || 'Failed to create post. Please try again.');
         return;
@@ -263,7 +272,7 @@ export default function CreatePostModal({
                     : 'border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100'
                   }`}
               >
-                ✨ All Seven
+                ✨ General / All Seven (No Tag)
               </button>
               {MEMBERS_DATA.map((member) => (
                 <button
@@ -409,13 +418,21 @@ export default function CreatePostModal({
             )}
           </div>
 
-          {/* Moderation Error Alert */}
+          {/* Moderation / Auth Error Alert */}
           {moderationError && (
             <div className="flex items-start gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-800 animate-in fade-in">
               <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="font-bold">Guidelines Notice</p>
+                <p className="font-bold">{!session?.user ? 'Authentication Required' : 'Guidelines Notice'}</p>
                 <p className="mt-0.5 text-amber-700">{moderationError}</p>
+                {!session?.user && (
+                  <a
+                    href="/login"
+                    className="mt-2 inline-flex items-center gap-1 font-bold text-rose-600 hover:text-rose-700 underline"
+                  >
+                    Go to Sign In &rarr;
+                  </a>
+                )}
               </div>
             </div>
           )}

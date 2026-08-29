@@ -7,12 +7,10 @@ import { checkRateLimit, resetRateLimit, RATE_LIMIT_POLICIES } from "@/lib/rate-
 import { getClientIp } from "@/lib/ip";
 import { logSecurityEvent } from "@/lib/security-logger";
 
-/** How often (ms) to re-verify a user's role from the database */
-const ROLE_RECHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
-
 import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET || "w1khxVWwDxKqcLWqDD2hnVj8w3pA/ejZ7PvEY6qnaWk=",
   adapter: PrismaAdapter(prisma) as Adapter,
   providers: [
     CredentialsProvider({
@@ -93,6 +91,10 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days session persistence
+  },
+  jwt: {
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
     async signIn() {
@@ -126,22 +128,18 @@ export const authOptions: NextAuthOptions = {
         if (session.name) token.name = session.name;
         if (session.image !== undefined) token.picture = session.image;
       } else if (token.sub) {
-        // Subsequent requests: for admin role, re-verify immediately; otherwise periodically
-        const lastChecked = (token.roleCheckedAt as number) || 0;
-        const recheckInterval = token.role === 'admin' ? 0 : ROLE_RECHECK_INTERVAL_MS;
-        if (Date.now() - lastChecked >= recheckInterval) {
-          try {
-            const dbUser = await prisma.user.findUnique({
-              where: { id: token.sub },
-              select: { role: true },
-            });
-            if (dbUser) {
-              token.role = dbUser.role;
-            }
-          } catch {
-            // If DB lookup fails, keep current role to avoid locking users out
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.sub },
+            select: { role: true, name: true, image: true },
+          });
+          if (dbUser) {
+            token.role = dbUser.role;
+            if (dbUser.name) token.name = dbUser.name;
+            if (dbUser.image) token.picture = dbUser.image;
           }
-          token.roleCheckedAt = Date.now();
+        } catch {
+          // If DB lookup fails, keep current role to avoid locking users out
         }
       }
       return token;

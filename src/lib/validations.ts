@@ -31,7 +31,7 @@ export const appreciationSchema = z.object({
 export const postSchema = z.object({
   type: z.string().min(1, 'Post type is required'),
   title: z.string().max(200, 'Title is too long').optional().default(''),
-  content: z.string().min(10, 'Post must be at least 10 characters long').max(2000, 'Post is too long'),
+  content: z.string().min(1, 'Post cannot be empty').max(2000, 'Post is too long'),
   memberId: z.string().optional().nullable(),
   imageUrl: serverOrHttpUrl.optional().or(z.literal('')),
 });

@@ -155,7 +155,7 @@ describe('Zod Validation Schemas', () => {
     it('rejects content too short', () => {
       const result = postSchema.safeParse({
         type: 'Appreciation',
-        content: 'Short',
+        content: '',
       });
       expect(result.success).toBe(false);
     });

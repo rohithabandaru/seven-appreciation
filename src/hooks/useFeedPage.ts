@@ -152,9 +152,99 @@ export function useFeedPage(initialCategory: string = 'all') {
         body: JSON.stringify({ content: comment.content }),
       });
       if (res.ok) {
-        await loadPosts();
+        const createdComment = await res.json();
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId
+              ? {
+                  ...p,
+                  commentsCount: (p.commentsCount || 0) + 1,
+                  comments: [createdComment, ...(p.comments || [])],
+                }
+              : p
+          )
+        );
       }
     } catch {
+      await loadPosts();
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    const prevPosts = [...posts];
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+
+    try {
+      const res = await fetch(`/api/posts/${postId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        setToast({
+          type: 'success',
+          title: 'Post Deleted',
+          message: 'Your post was successfully removed.',
+        });
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setPosts(prevPosts);
+        setToast({
+          type: 'error',
+          title: 'Failed to Delete',
+          message: err.error || 'Could not delete the post. Please try again.',
+        });
+      }
+    } catch {
+      setPosts(prevPosts);
+      setToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Network error occurred while deleting the post.',
+      });
+    }
+  };
+
+  const handleDeleteComment = async (postId: string, commentId: string) => {
+    const prevPosts = [...posts];
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              commentsCount: Math.max(0, (p.commentsCount || 1) - 1),
+              comments: (p.comments || []).filter((c) => c.id !== commentId),
+            }
+          : p
+      )
+    );
+
+    try {
+      const res = await fetch(`/api/posts/${postId}/comments/${commentId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        setToast({
+          type: 'success',
+          title: 'Reply Deleted',
+          message: 'Your reply has been removed.',
+        });
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setPosts(prevPosts);
+        setToast({
+          type: 'error',
+          title: 'Failed to Delete Reply',
+          message: err.error || 'Could not delete reply.',
+        });
+      }
+    } catch {
+      setPosts(prevPosts);
+      setToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Network error occurred while deleting the reply.',
+      });
     }
   };
 
@@ -178,6 +268,8 @@ export function useFeedPage(initialCategory: string = 'all') {
     setReportTarget,
     handleLike,
     handleAddComment,
+    handleDeletePost,
+    handleDeleteComment,
     loadPosts,
     loadMorePosts,
     hasMore,

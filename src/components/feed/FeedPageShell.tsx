@@ -4,6 +4,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import UnifiedPostCard from '@/components/feed/UnifiedPostCard';
 import FeedSidebar from '@/components/feed/FeedSidebar';
+import TwitterComposer from '@/components/feed/TwitterComposer';
 import { MEMBERS_DATA } from '@/lib/data/membersData';
 import { Post, Comment } from '@/types';
 import { Plus, Sparkles, Heart, BookOpen, Image as ImageIcon, MessageSquare, Loader2 } from 'lucide-react';
@@ -25,6 +26,9 @@ interface FeedPageShellProps {
   setSelectedMember: (member: string) => void;
   handleLike: (postId: string) => void;
   handleAddComment: (postId: string, comment: Comment) => void;
+  handleDeletePost?: (postId: string) => void;
+  handleDeleteComment?: (postId: string, commentId: string) => void;
+  setPosts?: React.Dispatch<React.SetStateAction<Post[]>>;
   setReportTarget: (target: { id: string; snippet: string }) => void;
   setToast: (toast: { type: 'success' | 'warning' | 'error'; title: string; message: string } | null) => void;
   setShowCreateModal: (show: boolean) => void;
@@ -32,6 +36,8 @@ interface FeedPageShellProps {
   hasMore?: boolean;
   isLoadingMore?: boolean;
   showTabs?: boolean;
+  activePrompt?: string | null;
+  onClearPrompt?: () => void;
   emptyIcon: React.ComponentType<{ className?: string }>;
   emptyTitle: string;
   emptyDesc: string;
@@ -48,6 +54,9 @@ export default function FeedPageShell({
   setSelectedMember,
   handleLike,
   handleAddComment,
+  handleDeletePost,
+  handleDeleteComment,
+  setPosts,
   setReportTarget,
   setToast,
   setShowCreateModal,
@@ -55,6 +64,8 @@ export default function FeedPageShell({
   hasMore = false,
   isLoadingMore = false,
   showTabs = true,
+  activePrompt,
+  onClearPrompt,
   emptyIcon: EmptyIcon,
   emptyTitle,
   emptyDesc,
@@ -88,6 +99,12 @@ export default function FeedPageShell({
     return matchesTab && matchesMember;
   });
 
+  const handlePostCreated = (newPost: Post) => {
+    if (setPosts) {
+      setPosts((prev) => [newPost, ...prev]);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col font-sans">
       <Navbar />
@@ -99,6 +116,16 @@ export default function FeedPageShell({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mt-8">
             <div className="lg:col-span-8 space-y-6">
               
+              {/* Twitter / X Style Inline Composer */}
+              <TwitterComposer
+                onPostCreated={handlePostCreated}
+                onToast={setToast}
+                defaultMember={selectedMember}
+                defaultCategory={activeTab}
+                activePrompt={activePrompt}
+                onClearPrompt={onClearPrompt}
+              />
+
               {showTabs && (
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
                   {CATEGORY_TABS.map((tab) => {
@@ -108,7 +135,7 @@ export default function FeedPageShell({
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-1.5 whitespace-nowrap rounded-2xl px-4 py-2 text-xs font-bold transition-all border ${
+                        className={`flex items-center gap-1.5 whitespace-nowrap rounded-2xl px-4 py-2 text-xs font-bold transition-all border cursor-pointer ${
                           isActive
                             ? 'border-rose-500 bg-rose-500 text-white shadow-xs'
                             : 'border-zinc-200 bg-white text-zinc-600 hover:border-rose-200 hover:bg-rose-50/50'
@@ -130,7 +157,7 @@ export default function FeedPageShell({
                   
                   <button
                     onClick={() => setSelectedMember('all')}
-                    className={`rounded-xl px-3 py-1 text-xs font-bold whitespace-nowrap transition-all border ${
+                    className={`rounded-xl px-3 py-1 text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${
                       selectedMember === 'all'
                         ? 'border-rose-500 bg-rose-50 text-rose-700 font-extrabold ring-1 ring-rose-500'
                         : 'border-zinc-200 bg-zinc-50 text-zinc-600 hover:bg-zinc-100'
@@ -145,7 +172,7 @@ export default function FeedPageShell({
                       <button
                         key={member.slug}
                         onClick={() => setSelectedMember(member.slug)}
-                        className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-semibold whitespace-nowrap transition-all border ${
+                        className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer ${
                           isSelected
                             ? 'border-rose-500 bg-rose-50 text-rose-700 font-bold ring-1 ring-rose-500'
                             : 'border-zinc-200 bg-white text-zinc-700 hover:border-rose-200 hover:bg-rose-50/40'
@@ -170,6 +197,8 @@ export default function FeedPageShell({
                         post={post}
                         onLike={handleLike}
                         onAddComment={handleAddComment}
+                        onDeletePost={handleDeletePost}
+                        onDeleteComment={handleDeleteComment}
                         onReport={(id, snippet) => setReportTarget({ id, snippet })}
                         onToast={setToast}
                       />
@@ -185,7 +214,7 @@ export default function FeedPageShell({
                         ) : (
                           <button
                             onClick={() => loadMorePosts && loadMorePosts()}
-                            className="text-xs font-bold text-zinc-500 hover:text-rose-600 bg-white px-4 py-2 rounded-full border border-zinc-200 hover:border-rose-300 transition-all shadow-2xs"
+                            className="text-xs font-bold text-zinc-500 hover:text-rose-600 bg-white px-4 py-2 rounded-full border border-zinc-200 hover:border-rose-300 transition-all shadow-2xs cursor-pointer"
                           >
                             Load More Posts &darr;
                           </button>
@@ -208,7 +237,7 @@ export default function FeedPageShell({
                     </p>
                     <button
                       onClick={() => setShowCreateModal(true)}
-                      className={`mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition-colors ${emptyBtnColor}`}
+                      className={`mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition-colors cursor-pointer ${emptyBtnColor}`}
                     >
                       <Plus className="h-4 w-4" />
                       <span>{emptyBtnText}</span>

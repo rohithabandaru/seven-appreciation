@@ -18,6 +18,7 @@ const mockPrisma = {
     findMany: jest.fn(),
     findUnique: jest.fn(),
     create: jest.fn(),
+    delete: jest.fn(),
     count: jest.fn().mockResolvedValue(0),
   },
   appreciationMessage: {
@@ -95,6 +96,7 @@ const mockPrisma = {
     findMany: jest.fn().mockResolvedValue([]),
   },
   comment: {
+    findUnique: jest.fn(),
     delete: jest.fn(),
   },
   moderationAction: {
@@ -448,7 +450,7 @@ describe('Content Creation', () => {
       const { POST } = require('@/app/api/posts/route');
       const req = new Request('http://localhost/api/posts', {
         method: 'POST',
-        body: JSON.stringify({ type: 'Appreciation', content: 'Short' }),
+        body: JSON.stringify({ type: 'Appreciation', content: '' }),
         headers: { 'content-type': 'application/json', 'content-length': '100' },
       });
       const res = await POST(req);
@@ -465,7 +467,7 @@ describe('Content Creation', () => {
         title: 'Heartfelt Note',
         content: 'Thank you so much for bringing joy to our community every single day!',
         mediaUrl: null,
-        status: 'pending',
+        status: 'approved',
         createdAt: new Date(),
         updatedAt: new Date(),
         user: { name: 'Kind Fan', image: null }
@@ -485,11 +487,61 @@ describe('Content Creation', () => {
       expect(res.status).toBe(201);
 
       const createCall = mockPrisma.post.create.mock.calls[0][0];
-      expect(createCall.data.status).toBe('pending');
+      expect(createCall.data.status).toBe('approved');
 
       const body = await res.json();
       expect(body.id).toBe('post-123');
-      expect(body.status).toBe('pending');
+      expect(body.status).toBe('approved');
+    });
+
+    it('allows author to delete their own post', async () => {
+      mockSession = { user: { id: 'user-test-123', role: 'user' } };
+      mockPrisma.post.findUnique.mockResolvedValueOnce({
+        id: 'post-123',
+        userId: 'user-test-123',
+      });
+      mockPrisma.post.delete.mockResolvedValueOnce({ id: 'post-123' });
+
+      const { DELETE } = require('@/app/api/posts/[postId]/route');
+      const req = new Request('http://localhost/api/posts/post-123', { method: 'DELETE' });
+      const res = await DELETE(req, { params: Promise.resolve({ postId: 'post-123' }) });
+
+      expect(res.status).toBe(200);
+      expect(mockPrisma.post.delete).toHaveBeenCalledWith({ where: { id: 'post-123' } });
+    });
+
+    it('rejects post deletion from unauthorized user', async () => {
+      mockSession = { user: { id: 'user-test-123', role: 'user' } };
+      mockPrisma.post.findUnique.mockResolvedValueOnce({
+        id: 'post-123',
+        userId: 'other-user',
+      });
+
+      const { DELETE } = require('@/app/api/posts/[postId]/route');
+      const req = new Request('http://localhost/api/posts/post-123', { method: 'DELETE' });
+      const res = await DELETE(req, { params: Promise.resolve({ postId: 'post-123' }) });
+
+      expect(res.status).toBe(403);
+    });
+  });
+
+  describe('Comment DELETE', () => {
+    it('allows author to delete their own comment', async () => {
+      mockSession = { user: { id: 'user-test-123', role: 'user' } };
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 'comment-1',
+        postId: 'post-123',
+        userId: 'user-test-123',
+        post: { userId: 'other-user' }
+      });
+      mockPrisma.comment.delete.mockResolvedValueOnce({ id: 'comment-1' });
+
+      const { DELETE } = require('@/app/api/posts/[postId]/comments/[commentId]/route');
+      const req = new Request('http://localhost/api/posts/post-123/comments/comment-1', { method: 'DELETE' });
+      const res = await DELETE(req, { params: Promise.resolve({ postId: 'post-123', commentId: 'comment-1' }) });
+
+      expect(res.status).toBe(200);
+      expect(mockPrisma.comment.delete).toHaveBeenCalledWith({ where: { id: 'comment-1' } });
     });
   });
 

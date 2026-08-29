@@ -266,8 +266,8 @@ describe('REG-007: Missing Zod Validation', () => {
     expect(result.success).toBe(false);
   });
 
-  it('post rejects content < 10 chars via Zod', () => {
-    const result = postSchema.safeParse({ type: 'Appreciation', content: 'Short' });
+  it('post rejects content < 1 chars via Zod', () => {
+    const result = postSchema.safeParse({ type: 'Appreciation', content: '' });
     expect(result.success).toBe(false);
   });
 

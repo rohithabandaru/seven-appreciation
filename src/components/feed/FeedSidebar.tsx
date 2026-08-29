@@ -1,6 +1,5 @@
 'use client';
 
-import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
@@ -12,16 +11,11 @@ import {
 } from 'lucide-react';
 import { MEMBERS_DATA } from '@/lib/data/membersData';
 import { getUpcomingBirthdays } from '@/lib/birthdays';
-import { UpcomingBirthday } from '@/types';
 
 export default function FeedSidebar() {
-  const [birthdays] = useState<UpcomingBirthday[]>(getUpcomingBirthdays().slice(0, 2));
-  const [spotlightIndex] = useState(() => {
-    const day = new Date().getDate();
-    return day % MEMBERS_DATA.length;
-  });
-
-  const spotlightMember = MEMBERS_DATA[spotlightIndex] || MEMBERS_DATA[0];
+  const birthdays = getUpcomingBirthdays().slice(0, 2);
+  const day = new Date().getDate();
+  const spotlightMember = MEMBERS_DATA[day % MEMBERS_DATA.length] || MEMBERS_DATA[0];
 
   return (
     <aside className="space-y-6">

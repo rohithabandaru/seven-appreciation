@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Toast from '@/components/ui/Toast';
 import { Report, Post, AppreciationMessage } from '@/types';
-import { ShieldCheck, ShieldAlert, CheckCircle, Ban, EyeOff, Trash2, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, CheckCircle, Ban, EyeOff, Trash2, AlertTriangle, LogIn, Loader2 } from 'lucide-react';
 export default function AdminDashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -199,8 +200,9 @@ export default function AdminDashboardPage() {
     return (
       <div className="min-h-screen flex flex-col font-sans">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center">
-          <span className="text-sm text-zinc-500">Loading...</span>
+        <main className="flex-1 flex flex-col items-center justify-center gap-3 p-8">
+          <Loader2 className="h-8 w-8 text-rose-500 animate-spin" />
+          <span className="text-sm font-semibold text-zinc-600 animate-pulse">Loading Mod Hub...</span>
         </main>
         <Footer />
       </div>
@@ -211,11 +213,24 @@ export default function AdminDashboardPage() {
     return (
       <div className="min-h-screen flex flex-col font-sans">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center space-y-2">
-            <ShieldAlert className="mx-auto h-12 w-12 text-rose-400" />
-            <h1 className="text-xl font-bold text-zinc-900">Access Denied</h1>
-            <p className="text-sm text-zinc-500">You do not have permission to access the admin dashboard.</p>
+        <main className="flex-1 flex items-center justify-center p-6">
+          <div className="text-center space-y-4 max-w-md rounded-3xl border border-rose-100 bg-white p-8 shadow-lg shadow-rose-100/50">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 border border-rose-100 text-rose-500 shadow-xs">
+              <ShieldAlert className="h-8 w-8" />
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-xl font-black text-zinc-900">Admin Authentication Required</h1>
+              <p className="text-xs sm:text-sm text-zinc-500">
+                You must be signed in with an authorized Administrator account to access the Mod Hub.
+              </p>
+            </div>
+            <Link
+              href="/login?callbackUrl=/admin"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-rose-500 via-rose-600 to-amber-500 px-6 py-3 text-xs font-bold text-white shadow-md hover:scale-102 transition-all cursor-pointer"
+            >
+              <LogIn className="h-4 w-4" />
+              <span>Sign In as Admin</span>
+            </Link>
           </div>
         </main>
         <Footer />

@@ -7,13 +7,23 @@ const globalForPrisma = globalThis as unknown as {
   pool: pg.Pool | undefined
 }
 
+const cleanConnectionString = (url?: string) =>
+  url ? url.replace('&channel_binding=require', '').replace('?channel_binding=require&', '?').replace('?channel_binding=require', '') : url;
+
 export const prisma =
   globalForPrisma.prisma ??
   (() => {
-    const pool = globalForPrisma.pool ?? new pg.Pool({ connectionString: process.env.DATABASE_URL })
-    if (!globalForPrisma.pool) globalForPrisma.pool = pool
-    const adapter = new PrismaPg(pool)
-    return new PrismaClient({ adapter })
-  })()
+    const connStr = cleanConnectionString(process.env.DATABASE_URL);
+    const pool = globalForPrisma.pool ?? new pg.Pool({
+      connectionString: connStr,
+      ssl: { rejectUnauthorized: false },
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    });
+    if (!globalForPrisma.pool) globalForPrisma.pool = pool;
+    const adapter = new PrismaPg(pool);
+    return new PrismaClient({ adapter });
+  })();
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;

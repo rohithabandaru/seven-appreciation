@@ -6,7 +6,8 @@ import UserAvatar from '@/components/ui/UserAvatar';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Toast from '@/components/ui/Toast';
-import { getStoredProfile, saveProfile } from '@/lib/storage';
+import { getStoredProfile, saveProfile, CURRENT_USER_PROFILE } from '@/lib/storage';
+import { Profile } from '@/types';
 import { uploadFile, validateFileClient } from '@/lib/upload/client';
 import { MEMBERS_DATA } from '@/lib/data/membersData';
 import { 
@@ -25,27 +26,42 @@ import { useSession } from 'next-auth/react';
 
 export default function ProfilePage() {
   const { data: session, update } = useSession();
-  const [profile, setProfile] = useState(getStoredProfile());
+  const [profile, setProfile] = useState<Profile>(CURRENT_USER_PROFILE);
   const [isEditing, setIsEditing] = useState(false);
-  const [displayName, setDisplayName] = useState(profile.displayName);
-  const [bio, setBio] = useState(profile.bio);
-  const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl);
+  const [displayName, setDisplayName] = useState(CURRENT_USER_PROFILE.displayName);
+  const [bio, setBio] = useState(CURRENT_USER_PROFILE.bio);
+  const [avatarUrl, setAvatarUrl] = useState(CURRENT_USER_PROFILE.avatarUrl);
 
-  React.useEffect(() => {
+  const [lastSession, setLastSession] = React.useState(session);
+
+  if (lastSession !== session) {
+    setLastSession(session);
+    const stored = typeof window !== 'undefined' ? getStoredProfile() : CURRENT_USER_PROFILE;
     if (session?.user) {
-      /* eslint-disable react-hooks/set-state-in-effect -- sync editable form state from async NextAuth session once it loads */
-      setDisplayName(session.user.name || 'Kind Supporter');
-      setAvatarUrl(session.user.image || '');
-      setProfile((prev) => ({
-        ...prev,
-        displayName: session.user.name || 'Kind Supporter',
-        avatarUrl: session.user.image || '',
-        username: session.user.email?.split('@')[0] || prev.username,
-        role: session.user.role || prev.role
-      }));
-      /* eslint-enable react-hooks/set-state-in-effect */
+      const activeName = session.user.name || stored.displayName || 'Kind Supporter';
+      const activeImage = session.user.image || stored.avatarUrl || '';
+      const activeBio = stored.bio || 'Spreading kindness and love for all seven members!';
+      const activeRole = session.user.role || stored.role || 'fan';
+      const activeUsername = session.user.email?.split('@')[0] || stored.username || 'supporter';
+
+      setDisplayName(activeName);
+      setAvatarUrl(activeImage);
+      setBio(activeBio);
+      setProfile({
+        ...stored,
+        displayName: activeName,
+        avatarUrl: activeImage,
+        bio: activeBio,
+        username: activeUsername,
+        role: activeRole
+      });
+    } else {
+      setDisplayName(stored.displayName);
+      setAvatarUrl(stored.avatarUrl);
+      setBio(stored.bio);
+      setProfile(stored);
     }
-  }, [session]);
+  }
 
   // Avatar Modal State
   const [showAvatarModal, setShowAvatarModal] = useState(false);
@@ -60,6 +76,15 @@ export default function ProfilePage() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!session?.user) {
+      setToast({
+        type: 'warning',
+        title: 'Sign In Required',
+        message: 'Please sign in with your account to change your profile picture.'
+      });
+      return;
+    }
 
     const clientCheck = validateFileClient(file, 2 * 1024 * 1024);
     if (!clientCheck.valid) {

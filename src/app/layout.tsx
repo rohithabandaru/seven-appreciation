@@ -3,6 +3,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/components/providers/AuthProvider";
 import RegisterPWA from "@/components/providers/RegisterPWA";
+import FloatingCoffee from "@/components/ui/FloatingCoffee";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </a>
         <AuthProvider>
           <RegisterPWA />
+          <FloatingCoffee />
           {children}
         </AuthProvider>
       </body>

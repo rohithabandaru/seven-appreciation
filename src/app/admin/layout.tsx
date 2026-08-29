@@ -11,7 +11,12 @@ export const metadata: Metadata = {
 export default async function Layout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id || session.user.role !== "admin" || !(await isDbAdmin(session.user.id))) {
+  if (!session?.user?.id) {
+    redirect("/login?callbackUrl=/admin");
+  }
+
+  const isAdmin = session.user.role === "admin" || (await isDbAdmin(session.user.id));
+  if (!isAdmin) {
     redirect("/");
   }
 
