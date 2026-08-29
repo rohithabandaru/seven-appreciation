@@ -33,7 +33,8 @@ interface UnifiedPostCardProps {
   onDeletePost?: (postId: string) => void;
   onDeleteComment?: (postId: string, commentId: string) => void;
   onReport?: (postId: string, snippet: string) => void;
-  onToast?: (toast: { type: 'success' | 'warning' | 'error'; title: string; message: string }) => void;
+  onToast?: (toast: { type: 'success' | 'warning' | 'error'; title: string; message: string } | null) => void;
+  isPriority?: boolean;
 }
 
 export default function UnifiedPostCard({
@@ -44,7 +45,8 @@ export default function UnifiedPostCard({
   onDeletePost,
   onDeleteComment,
   onReport,
-  onToast
+  onToast,
+  isPriority = false
 }: UnifiedPostCardProps) {
   const { data: session } = useSession();
   const currentUserId = propUserId || session?.user?.id || '';
@@ -308,6 +310,7 @@ export default function UnifiedPostCard({
             src={post.imageUrl}
             alt={post.title || 'Post image'}
             fill
+            priority={isPriority}
             className="object-cover transition-transform duration-500 hover:scale-[1.02]"
             sizes="(max-width: 768px) 100vw, 700px"
           />

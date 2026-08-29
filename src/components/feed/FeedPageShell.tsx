@@ -191,10 +191,11 @@ export default function FeedPageShell({
               <div className="space-y-4">
                 {filteredPosts.length > 0 ? (
                   <>
-                    {filteredPosts.map((post) => (
+                    {filteredPosts.map((post, index) => (
                       <UnifiedPostCard
                         key={post.id}
                         post={post}
+                        isPriority={index === 0}
                         onLike={handleLike}
                         onAddComment={handleAddComment}
                         onDeletePost={handleDeletePost}

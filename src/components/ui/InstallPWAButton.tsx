@@ -8,16 +8,12 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-function subscribe() {
-  return () => {};
-}
-
 function useHydrated(): boolean {
-  return useSyncExternalStore(
-    subscribe,
-    () => true,
-    () => false
-  );
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  return mounted;
 }
 
 export default function InstallPWAButton() {
@@ -113,7 +109,7 @@ export default function InstallPWAButton() {
           onClick={() => setShowModal(false)}
         >
           <div
-            className="w-full max-w-sm rounded-3xl border border-rose-200 bg-white dark:bg-zinc-900 p-6 shadow-2xl space-y-4 text-center"
+            className="w-full max-w-sm rounded-3xl border border-rose-200 bg-white dark:bg-zinc-900 p-6 shadow-2xl space-y-4 text-center max-h-[75vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400">

@@ -1,12 +1,12 @@
 import React from 'react';
 import Link from 'next/link';
-import { Heart, ShieldCheck, Sparkles } from 'lucide-react';
+import { Heart, ShieldCheck, Sparkles, AtSign, Camera, Play, MessageCircle } from 'lucide-react';
 import BuyMeCoffee from '@/components/ui/BuyMeCoffee';
 
 export default function Footer() {
   return (
     <footer className="border-t border-rose-100 dark:border-rose-900/30 bg-amber-50/60 dark:bg-[#1C1917] text-zinc-700 dark:text-zinc-300">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-12 pb-28 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           {/* Col 1: Brand & Philosophy */}
           <div className="md:col-span-2 space-y-4">
@@ -91,7 +91,26 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-rose-100 dark:border-rose-900/30 pt-6 text-center sm:flex-row sm:text-left text-xs text-zinc-400">
-          <p>&copy; {new Date().getFullYear()} Seven Appreciation Community. Built with genuine love and care.</p>
+          <div>&copy; {new Date().getFullYear()} Seven Appreciation Community. Built with genuine love and care.</div>
+          
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-5 sm:pr-32 font-bold text-sm">
+            <a href="https://x.com/bandaru_ro61488" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sky-500 hover:text-sky-600 transition-colors" title="X (Twitter)">
+              <AtSign className="h-5 w-5" />
+              <span className="hidden sm:inline">Twitter</span>
+            </a>
+            <a href="https://www.instagram.com/enha100930/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-pink-500 hover:text-pink-600 transition-colors" title="Instagram">
+              <Camera className="h-5 w-5" />
+              <span className="hidden sm:inline">Instagram</span>
+            </a>
+            <a href="https://www.youtube.com/@forenhypen1009" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-red-500 hover:text-red-600 transition-colors" title="YouTube">
+              <Play className="h-5 w-5 fill-current" />
+              <span className="hidden sm:inline">YouTube</span>
+            </a>
+            <a href="https://discord.gg/DQDVrjhWd" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[#5865F2] hover:opacity-80 transition-colors" title="Join Discord Server">
+              <MessageCircle className="h-5 w-5 fill-current" />
+              <span className="hidden sm:inline">Discord</span>
+            </a>
+          </div>
         </div>
       </div>
     </footer>
