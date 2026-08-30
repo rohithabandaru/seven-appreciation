@@ -11,7 +11,7 @@ import {
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { logSecurityEvent } from '@/lib/security-logger';
 
-const UPLOAD_RATE_LIMIT_POLICY = { windowMs: 60 * 60 * 1000, maxRequests: 20 };
+const UPLOAD_RATE_LIMIT_POLICY = { windowMs: 60 * 60 * 1000, maxRequests: 60 };
 
 const DEBUG_LOG = process.env.NODE_ENV !== 'production';
 function debugLog(line: string) {
@@ -40,17 +40,21 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file');
     const purpose = (formData.get('purpose') as string) || 'photo';
-    debugLog(`formData parsed file=${file instanceof File ? `${file.name} type=${file.type} size=${file.size}` : 'MISSING'} purpose=${purpose}`);
 
-    if (!file || !(file instanceof File)) {
+    if (!file || typeof file === 'string' || typeof (file as Blob).arrayBuffer !== 'function') {
+      debugLog('REJECT 400 No valid file provided');
       return NextResponse.json({ error: 'No file provided.' }, { status: 400 });
     }
 
+    const rawFile = file as Blob & { name?: string; type?: string };
+    const fileName = (typeof rawFile.name === 'string' && rawFile.name) ? rawFile.name : 'upload.jpg';
+    debugLog(`formData parsed file=${fileName} type=${rawFile.type} size=${rawFile.size} purpose=${purpose}`);
+
     const category = getUploadCategoryFromPurpose(purpose);
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const buffer = Buffer.from(await rawFile.arrayBuffer());
 
-    const validation = validateFileUpload(file, buffer, category);
+    const validation = validateFileUpload({ name: fileName, type: rawFile.type, size: rawFile.size }, buffer, category);
     debugLog(`validation=${validation.valid ? 'PASS' : `FAIL: ${validation.error}`}`);
     if (!validation.valid) {
       logSecurityEvent({
@@ -131,7 +135,7 @@ export async function POST(request: NextRequest) {
           storageKey: storageResult.storageKey,
           url: storageResult.publicUrl,
           fileData: processed.buffer.toString('base64'),
-          originalName: file.name.slice(0, 255),
+          originalName: fileName.slice(0, 255),
           mimeType: `image/${processed.format}`,
           size: processed.size,
           width: processed.width,

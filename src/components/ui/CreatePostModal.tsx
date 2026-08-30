@@ -88,17 +88,21 @@ export default function CreatePostModal({
 
     const clientCheck = validateFileClient(file, 5 * 1024 * 1024);
     if (!clientCheck.valid) {
+      setModerationError(clientCheck.error || 'Please select a valid image file (under 5MB).');
       return;
     }
 
     setUploadedFileName(file.name);
     setIsUploading(true);
+    setModerationError(null);
 
     try {
       const result = await uploadFile(file, 'post-image');
       setImageUrl(result.url);
-    } catch {
+      setModerationError(null);
+    } catch (err) {
       setUploadedFileName('');
+      setModerationError(err instanceof Error ? err.message : 'Could not upload image. Please try again.');
     } finally {
       setIsUploading(false);
     }

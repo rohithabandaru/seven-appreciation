@@ -1,7 +1,10 @@
 import { UPLOAD_CONFIG, type UploadCategory, getMaxFileSize } from './config';
 
 const MAGIC_BYTES: Record<string, Buffer[]> = {
-  'image/jpeg': [Buffer.from([0xff, 0xd8, 0xff])],
+  'image/jpeg': [
+    Buffer.from([0xff, 0xd8, 0xff]),
+    Buffer.from([0xff, 0xd8]),
+  ],
   'image/png': [Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])],
   'image/webp': [
     Buffer.from('RIFF', 'ascii'),
@@ -15,12 +18,12 @@ export interface FileValidationResult {
 }
 
 function detectMimeType(buffer: Buffer): string | null {
-  if (buffer.length < 12) return null;
+  if (buffer.length < 2) return null;
 
   for (const [mimeType, signatures] of Object.entries(MAGIC_BYTES)) {
     for (const sig of signatures) {
       if (mimeType === 'image/webp') {
-        if (buffer.subarray(0, 4).equals(sig) && buffer.subarray(8, 12).equals(Buffer.from('WEBP', 'ascii'))) {
+        if (buffer.length >= 12 && buffer.subarray(0, 4).equals(sig) && buffer.subarray(8, 12).equals(Buffer.from('WEBP', 'ascii'))) {
           return mimeType;
         }
       } else if (buffer.subarray(0, sig.length).equals(sig)) {
@@ -41,7 +44,7 @@ function sanitizeFilename(filename: string): string {
 }
 
 export function validateFileUpload(
-  file: File,
+  file: { name?: string; type?: string; size?: number },
   buffer: Buffer,
   category: UploadCategory
 ): FileValidationResult {
@@ -103,7 +106,8 @@ export function validateFileUpload(
   return { valid: true };
 }
 
-export function getFileExtension(filename: string): string | null {
+export function getFileExtension(filename?: string): string | null {
+  if (!filename || typeof filename !== 'string') return null;
   const lastDot = filename.lastIndexOf('.');
   if (lastDot === -1 || lastDot === filename.length - 1) return null;
   return filename.slice(lastDot).toLowerCase();

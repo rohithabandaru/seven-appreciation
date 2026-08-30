@@ -110,8 +110,16 @@ export default function TwitterComposer({
           message: 'Image uploaded successfully.'
         });
       }
-    } catch {
-      setErrorMsg('Failed to upload image. Please try again.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to upload image. Please try again.';
+      setErrorMsg(message);
+      if (onToast) {
+        onToast({
+          type: 'error',
+          title: 'Upload Failed',
+          message
+        });
+      }
     } finally {
       setIsUploading(false);
     }
