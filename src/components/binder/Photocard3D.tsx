@@ -150,11 +150,10 @@ export default function Photocard3D({
                     e.stopPropagation();
                     onWishlistToggle();
                   }}
-                  className={`rounded-full p-1.5 backdrop-blur-md transition-all ${
-                    isWishlisted
+                  className={`rounded-full p-1.5 backdrop-blur-md transition-all ${isWishlisted
                       ? 'bg-rose-500 text-white shadow-rose-500/50 shadow-md scale-110'
                       : 'bg-black/60 text-white/80 hover:text-white hover:bg-black/80 border border-white/20'
-                  }`}
+                    }`}
                   title={isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
                 >
                   <Heart className={`h-3.5 w-3.5 ${isWishlisted ? 'fill-white' : ''}`} />

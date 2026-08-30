@@ -3,15 +3,15 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { 
-  Heart, 
-  MessageSquare, 
-  Bookmark, 
-  Share2, 
-  ShieldAlert, 
-  Sparkles, 
-  Send, 
-  Check, 
+import {
+  Heart,
+  MessageSquare,
+  Bookmark,
+  Share2,
+  ShieldAlert,
+  Sparkles,
+  Send,
+  Check,
   ChevronDown,
   ChevronUp,
   Trash2,
@@ -62,14 +62,15 @@ export default function UnifiedPostCard({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
 
   const isLiked = post.likedBy?.includes(currentUserId);
   const memberObj = post.memberId ? MEMBERS_DATA.find((m) => m.slug === post.memberId) : null;
 
   const safeContent = post.content ?? '';
   const isLongContent = safeContent.length > 280;
-  const displayContent = isLongContent && !isExpanded 
-    ? `${safeContent.slice(0, 280)}...` 
+  const displayContent = isLongContent && !isExpanded
+    ? `${safeContent.slice(0, 280)}...`
     : safeContent;
 
   const handleShare = () => {
@@ -205,7 +206,7 @@ export default function UnifiedPostCard({
 
             {/* Member Dedication Pill */}
             {memberObj ? (
-              <Link 
+              <Link
                 href={`/members/${memberObj.slug}`}
                 className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline"
               >
@@ -304,16 +305,17 @@ export default function UnifiedPostCard({
       </div>
 
       {/* Optional Attached Media */}
-      {post.imageUrl && (
+      {post.imageUrl && !imageError && (
         <div className="relative mt-4 max-h-[550px] w-full overflow-hidden rounded-2xl border border-rose-100/60 bg-zinc-950/90 flex items-center justify-center">
           {/* Ambient Blurred Background for spacing */}
-          <div 
+          <div
             className="absolute inset-0 bg-cover bg-center blur-2xl opacity-40 scale-110 pointer-events-none"
             style={{ backgroundImage: `url(${post.imageUrl})` }}
           />
           <img
             src={post.imageUrl}
             alt={post.title || 'Post image'}
+            onError={() => setImageError(true)}
             className="relative max-h-[550px] w-full object-contain transition-transform duration-300 hover:scale-[1.01]"
           />
         </div>
@@ -325,11 +327,10 @@ export default function UnifiedPostCard({
           {/* Like Button */}
           <button
             onClick={() => onLike && onLike(post.id)}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all cursor-pointer ${
-              isLiked
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all cursor-pointer ${isLiked
                 ? 'bg-rose-50 text-rose-600 shadow-xs scale-105 font-bold'
                 : 'hover:bg-rose-50/70 hover:text-rose-600'
-            }`}
+              }`}
             aria-label={isLiked ? "Unlike post" : "Like post"}
           >
             <Heart className={`h-4 w-4 transition-transform active:scale-125 ${isLiked ? 'fill-rose-500 text-rose-500' : ''}`} />
@@ -339,9 +340,8 @@ export default function UnifiedPostCard({
           {/* Comments / Replies Toggle */}
           <button
             onClick={() => setShowComments(!showComments)}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors cursor-pointer ${
-              showComments ? 'bg-amber-50 text-amber-700 font-bold' : 'hover:bg-zinc-100 hover:text-zinc-900'
-            }`}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors cursor-pointer ${showComments ? 'bg-amber-50 text-amber-700 font-bold' : 'hover:bg-zinc-100 hover:text-zinc-900'
+              }`}
             aria-label={showComments ? "Hide replies" : "Show replies"}
           >
             <MessageSquare className="h-4 w-4 text-zinc-500" />
@@ -354,9 +354,8 @@ export default function UnifiedPostCard({
         <div className="flex items-center gap-1.5">
           <button
             onClick={handleBookmarkToggle}
-            className={`rounded-full p-2 transition-colors cursor-pointer ${
-              isSaved ? 'bg-rose-50 text-rose-600' : 'hover:bg-zinc-100 text-zinc-500 hover:text-zinc-800'
-            }`}
+            className={`rounded-full p-2 transition-colors cursor-pointer ${isSaved ? 'bg-rose-50 text-rose-600' : 'hover:bg-zinc-100 text-zinc-500 hover:text-zinc-800'
+              }`}
             title="Save post"
             aria-label={isSaved ? "Remove from saved" : "Save post"}
           >
@@ -379,10 +378,10 @@ export default function UnifiedPostCard({
         <div className="mt-4 space-y-4 border-t border-zinc-100 pt-4 animate-in fade-in duration-200">
           {/* Add Reply Input Box */}
           <form onSubmit={handleCommentSubmit} className="flex items-center gap-2.5">
-            <UserAvatar 
-              name={session?.user?.name || 'You'} 
-              image={session?.user?.image || null} 
-              size={32} 
+            <UserAvatar
+              name={session?.user?.name || 'You'}
+              image={session?.user?.image || null}
+              size={32}
               className="flex-shrink-0"
             />
             <div className="relative flex-1 flex items-center">

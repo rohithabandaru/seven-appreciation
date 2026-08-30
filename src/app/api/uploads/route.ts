@@ -130,6 +130,7 @@ export async function POST(request: NextRequest) {
           ownerId: userId,
           storageKey: storageResult.storageKey,
           url: storageResult.publicUrl,
+          fileData: processed.buffer.toString('base64'),
           originalName: file.name.slice(0, 255),
           mimeType: `image/${processed.format}`,
           size: processed.size,
