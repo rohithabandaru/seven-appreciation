@@ -305,14 +305,16 @@ export default function UnifiedPostCard({
 
       {/* Optional Attached Media */}
       {post.imageUrl && (
-        <div className="relative mt-4 h-64 sm:h-80 w-full overflow-hidden rounded-2xl border border-rose-100/50 bg-zinc-100">
-          <Image
+        <div className="relative mt-4 max-h-[550px] w-full overflow-hidden rounded-2xl border border-rose-100/60 bg-zinc-950/90 flex items-center justify-center">
+          {/* Ambient Blurred Background for spacing */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center blur-2xl opacity-40 scale-110 pointer-events-none"
+            style={{ backgroundImage: `url(${post.imageUrl})` }}
+          />
+          <img
             src={post.imageUrl}
             alt={post.title || 'Post image'}
-            fill
-            priority={isPriority}
-            className="object-cover transition-transform duration-500 hover:scale-[1.02]"
-            sizes="(max-width: 768px) 100vw, 700px"
+            className="relative max-h-[550px] w-full object-contain transition-transform duration-300 hover:scale-[1.01]"
           />
         </div>
       )}

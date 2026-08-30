@@ -302,18 +302,20 @@ export default function TwitterComposer({
 
                 {/* Image Preview Thumbnail */}
                 {imageUrl && (
-                  <div className="relative mt-3 h-48 sm:h-60 w-full overflow-hidden rounded-2xl border border-rose-100 bg-zinc-100">
-                    <Image
+                  <div className="relative mt-3 max-h-72 w-full overflow-hidden rounded-2xl border border-rose-100 bg-zinc-950/90 flex items-center justify-center">
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center blur-xl opacity-30 scale-110 pointer-events-none"
+                      style={{ backgroundImage: `url(${imageUrl})` }}
+                    />
+                    <img
                       src={imageUrl}
                       alt="Uploaded attachment"
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, 600px"
+                      className="relative max-h-72 w-full object-contain"
                     />
                     <button
                       type="button"
                       onClick={handleRemoveImage}
-                      className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-900/70 text-white hover:bg-zinc-900 transition-colors shadow-md backdrop-blur-xs cursor-pointer"
+                      className="absolute top-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-900/70 text-white hover:bg-zinc-900 transition-colors shadow-md backdrop-blur-xs cursor-pointer"
                       title="Remove image"
                     >
                       <X className="h-4 w-4" />
