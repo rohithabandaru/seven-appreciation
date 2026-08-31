@@ -4,7 +4,7 @@ import "./globals.css";
 import AuthProvider from "@/components/providers/AuthProvider";
 import RegisterPWA from "@/components/providers/RegisterPWA";
 import FloatingCoffee from "@/components/ui/FloatingCoffee";
-import { Analytics } from "@vercel/analytics/react";
+import { Analytics } from "@vercel/analytics/next";
 
 const outfit = Outfit({
   variable: "--font-outfit",
