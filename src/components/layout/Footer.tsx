@@ -111,19 +111,21 @@ export default function Footer() {
               <span className="hidden sm:inline">Discord</span>
             </a>
           </div>
-                    {/* MaidenSail Verified Badge */}
-          <div className="mt-6 flex justify-center sm:justify-end sm:pr-32">
-            <a
-              href="https://maidensail.com/startup/seven-appreciation"
-              rel="dofollow"
-            >
-              <img
-                src="https://maidensail.com/badge/seven-appreciation.svg"
-                alt="Featured on MaidenSail"
-                height={44}
-              />
-            </a>
-          </div>
+  {/* MaidenSail Verified Badge */}
+<div className="mt-6 flex justify-center">
+  <a
+    href="https://maidensail.com/startup/seven-appreciation"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <img
+      src="https://maidensail.com/badge/seven-appreciation.svg"
+      alt="Featured on MaidenSail"
+      width={232}
+      height={44}
+    />
+  </a>
+</div>
         </div>
       </div>
     </footer>
