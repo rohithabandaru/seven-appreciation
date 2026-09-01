@@ -21,21 +21,18 @@ export default function Home() {
   };
 
   const header = (
-    <>
+    <div className="mb-6">
       <SpotlightAndPrompt onPromptClick={handlePromptClick} />
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-rose-100/70 via-amber-50/60 to-purple-100/40 p-6 sm:p-10 border border-rose-200/60 shadow-xs mb-8">
-        <div className="max-w-3xl space-y-4">
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-zinc-900 leading-tight">
-            Celebrate Their Artistry.{' '}
-            <span className="gradient-text-warm block sm:inline">Share Pure Love.</span>
-          </h1>
-
-          <p className="text-sm sm:text-base text-zinc-600 leading-relaxed">
-            A warm, positive community to share appreciation notes, fan stories, memories, and art celebrating all seven members with kindness and respect.
-          </p>
-        </div>
+      <div className="py-6 text-center">
+        <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-zinc-900 mb-2">
+          Celebrate Their Artistry.{' '}
+          <span className="text-rose-500">Share Pure Love.</span>
+        </h1>
+        <p className="text-sm sm:text-base text-zinc-600 max-w-xl mx-auto">
+          A warm, positive community to share appreciation notes, fan stories, memories, and art celebrating all seven members with kindness and respect.
+        </p>
       </div>
-    </>
+    </div>
   );
 
   return (

@@ -26,7 +26,7 @@ export default function SpotlightAndPrompt({ onPromptClick }: SpotlightAndPrompt
   return (
     <div className="space-y-6 mb-8">
       {/* MEMBER SPOTLIGHT BANNER */}
-      <div className="relative overflow-hidden rounded-3xl border border-rose-200/80 bg-gradient-to-r from-rose-500/10 via-amber-500/10 to-purple-500/10 p-6 sm:p-8 backdrop-blur-md shadow-xs">
+      <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4 sm:gap-6">
             <div className="relative h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 overflow-hidden rounded-2xl border-2 border-white shadow-md ring-2 ring-rose-400/30">
@@ -74,7 +74,7 @@ export default function SpotlightAndPrompt({ onPromptClick }: SpotlightAndPrompt
 
       {/* DAILY PROMPT CARD */}
       {dailyPrompt && (
-        <div className="rounded-2xl border border-amber-200/80 bg-amber-50/70 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+        <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500 text-white shadow-2xs flex-shrink-0 mt-0.5">
               <Lightbulb className="h-5 w-5" />

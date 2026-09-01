@@ -1,20 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Post, Comment, MemberSlug } from '@/types';
 
 export function useFeedPage(initialCategory: string = 'all') {
   const { data: session } = useSession();
   const userId = session?.user?.id;
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const tabParam = searchParams.get('tab');
   const [posts, setPosts] = useState<Post[]>([]);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
-  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<string>(tabParam || initialCategory);
+  const [activeTab, setActiveTab] = useState<string>(initialCategory);
   const [selectedMember, setSelectedMember] = useState<MemberSlug | 'all'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'warning' | 'error'; title: string; message: string } | null>(null);
@@ -34,8 +31,6 @@ export function useFeedPage(initialCategory: string = 'all') {
       }
     } catch (err) {
       console.error("Failed to load posts", err);
-    } finally {
-      setIsInitialLoading(false);
     }
   }, [selectedMember]);
 
@@ -70,6 +65,10 @@ export function useFeedPage(initialCategory: string = 'all') {
   }, [isLoadingMore, hasMore, page, selectedMember]);
 
   useEffect(() => {
+    setActiveTab(initialCategory);
+  }, [initialCategory]);
+
+  useEffect(() => {
     let cancelled = false;
     const initialLoad = async () => {
       try {
@@ -85,8 +84,6 @@ export function useFeedPage(initialCategory: string = 'all') {
         }
       } catch (err) {
         console.error("Failed to load posts", err);
-      } finally {
-        if (!cancelled) setIsInitialLoading(false);
       }
     };
     initialLoad();
@@ -274,6 +271,5 @@ export function useFeedPage(initialCategory: string = 'all') {
     loadMorePosts,
     hasMore,
     isLoadingMore,
-    isInitialLoading,
   };
 }

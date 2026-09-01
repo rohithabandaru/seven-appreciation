@@ -3,7 +3,6 @@ import Image from 'next/image';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import UnifiedPostCard from '@/components/feed/UnifiedPostCard';
-import FeedSidebar from '@/components/feed/FeedSidebar';
 import TwitterComposer from '@/components/feed/TwitterComposer';
 import { MEMBERS_DATA } from '@/lib/data/membersData';
 import { Post, Comment } from '@/types';
@@ -109,12 +108,12 @@ export default function FeedPageShell({
     <div className="min-h-screen flex flex-col font-sans">
       <Navbar />
 
-      <main className="flex-1 py-8 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
+      <main className="flex-1 py-4 sm:py-6 px-4">
+        <div className="mx-auto max-w-[720px]">
           {header}
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mt-8">
-            <div className="lg:col-span-8 space-y-6">
+          <div className="mt-4 space-y-6">
+            <div className="space-y-6">
               
               {/* Twitter / X Style Inline Composer */}
               <TwitterComposer
@@ -247,11 +246,6 @@ export default function FeedPageShell({
                 )}
               </div>
             </div>
-
-            <div className="lg:col-span-4">
-              <FeedSidebar />
-            </div>
-
           </div>
         </div>
       </main>
