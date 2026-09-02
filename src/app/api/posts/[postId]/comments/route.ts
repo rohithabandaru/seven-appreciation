@@ -12,6 +12,44 @@ const commentSchema = z.object({
   content: z.string().min(1, "Comment cannot be empty").max(500, "Comment is too long"),
 });
 
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ postId: string }> }
+) {
+  try {
+    const { postId } = await params;
+
+    const post = await prisma.post.findUnique({ where: { id: postId } });
+    if (!post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    const comments = await prisma.comment.findMany({
+      where: { postId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { name: true, image: true } },
+      },
+    });
+
+    return NextResponse.json(
+      comments.map((c) => ({
+        id: c.id,
+        postId: c.postId,
+        userId: c.userId,
+        userName: c.user?.name || "Kind Supporter",
+        userAvatar: c.user?.image || null,
+        content: c.content,
+        createdAt: c.createdAt.toISOString(),
+      })),
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Failed to fetch comments:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ postId: string }> }

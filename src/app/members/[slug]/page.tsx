@@ -101,11 +101,12 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
 
   useEffect(() => {
     // 1. Load appreciations from real cloud database (with local fallback)
-    fetch(`/api/appreciations?memberId=${member.slug}`)
+    fetch(`/api/appreciations?memberId=${member.slug}&limit=30`)
       .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          setAppreciations(data.map(m => ({
+      .then(json => {
+        const arr = Array.isArray(json) ? json : json?.data;
+        if (Array.isArray(arr) && arr.length > 0) {
+          setAppreciations(arr.map(m => ({
             ...m,
             likedBy: []
           })));
@@ -120,7 +121,7 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
       });
 
     // 2. Load member photos from real cloud database (merged with default photos)
-    fetch(`/api/photos?memberSlug=${member.slug}`)
+    fetch(`/api/photos?memberSlug=${member.slug}&limit=30`)
       .then(res => res.json())
       .then(json => {
         const data = Array.isArray(json) ? json : json?.data;
@@ -135,17 +136,18 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
       });
 
     // 3. Load letters from cloud
-    fetch(`/api/letters?memberId=${member.slug}`)
+    fetch(`/api/letters?memberId=${member.slug}&limit=30`)
       .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setLetters(data);
+      .then(json => {
+        const arr = Array.isArray(json) ? json : json?.data;
+        if (Array.isArray(arr)) {
+          setLetters(arr);
         }
       })
       .catch(console.error);
 
     // 4. Load posts from cloud
-    fetch(`/api/posts?memberId=${member.slug}`)
+    fetch(`/api/posts?memberId=${member.slug}&limit=20`)
       .then(res => res.json())
       .then(json => {
         const data = Array.isArray(json) ? json : json?.data;

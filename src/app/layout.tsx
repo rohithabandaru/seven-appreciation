@@ -9,7 +9,7 @@ import { Analytics } from "@vercel/analytics/next";
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  display: "swap",
 });
 
 export const viewport: Viewport = {
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${outfit.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${outfit.variable} ${outfit.className} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col bg-[#FFFDF9] text-zinc-900 dark:bg-[#121014] dark:text-zinc-100">
         <script
           dangerouslySetInnerHTML={{

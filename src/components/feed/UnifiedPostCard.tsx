@@ -63,6 +63,35 @@ export default function UnifiedPostCard({
   const [isDeleting, setIsDeleting] = useState(false);
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
+  const [allComments, setAllComments] = useState<Comment[] | null>(null);
+  const [loadingComments, setLoadingComments] = useState(false);
+
+  // Comments shown: preview (from post.comments) unless all have been lazily loaded
+  const displayedComments = allComments ?? post.comments ?? [];
+  const hasMoreComments = allComments === null && (post.commentsCount || 0) > (post.comments?.length || 0);
+
+  const handleLoadAllComments = async () => {
+    if (loadingComments || allComments !== null) return;
+    setLoadingComments(true);
+    try {
+      const res = await fetch(`/api/posts/${post.id}/comments`);
+      if (res.ok) {
+        const data = await res.json();
+        setAllComments(Array.isArray(data) ? data : data.data ?? []);
+      }
+    } catch (err) {
+      console.error("Failed to load all comments", err);
+      if (onToast) {
+        onToast({
+          type: 'error',
+          title: 'Failed to Load Replies',
+          message: 'Could not load all replies. Please try again.'
+        });
+      }
+    } finally {
+      setLoadingComments(false);
+    }
+  };
 
   const isLiked = post.likedBy?.includes(currentUserId);
   const memberObj = post.memberId ? MEMBERS_DATA.find((m) => m.slug === post.memberId) : null;
@@ -132,6 +161,7 @@ export default function UnifiedPostCard({
     }
     setCommentText('');
     setShowComments(true);
+    setAllComments(null);
     if (onToast) {
       onToast({
         type: 'success',
@@ -406,55 +436,78 @@ export default function UnifiedPostCard({
 
           {/* Comments / Replies List */}
           <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-            {post.comments && post.comments.length > 0 ? (
-              post.comments.map((comment) => {
-                const isCommentAuthor = Boolean(currentUserId && comment.userId === currentUserId);
-                const canDeleteComment = isCommentAuthor || isPostAuthor || isAdmin;
-                const isThisCommentDeleting = deletingCommentId === comment.id;
+            {displayedComments && displayedComments.length > 0 ? (
+              <>
+                {displayedComments.map((comment) => {
+                  const isCommentAuthor = Boolean(currentUserId && comment.userId === currentUserId);
+                  const canDeleteComment = isCommentAuthor || isPostAuthor || isAdmin;
+                  const isThisCommentDeleting = deletingCommentId === comment.id;
 
-                return (
-                  <div key={comment.id} className="group/reply relative flex gap-3 rounded-2xl bg-zinc-50/90 p-3.5 text-xs transition-colors hover:bg-rose-50/30 border border-zinc-100">
-                    <UserAvatar name={comment.userName} image={comment.userAvatar} size={30} className="flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-zinc-900">{comment.userName}</span>
-                          {isCommentAuthor && (
-                            <span className="rounded-sm bg-rose-100 px-1 text-[9px] font-bold text-rose-700">
-                              You
-                            </span>
-                          )}
-                          <span className="text-[10px] text-zinc-400">•</span>
-                          <span className="text-[10px] text-zinc-400">
-                            {new Date(comment.createdAt).toLocaleDateString(undefined, {
-                              month: 'short',
-                              day: 'numeric'
-                            })}
-                          </span>
-                        </div>
-
-                        {/* Delete Comment Button */}
-                        {canDeleteComment && (
-                          <button
-                            onClick={() => handleDeleteCommentClick(comment.id)}
-                            disabled={isThisCommentDeleting}
-                            className="opacity-0 group-hover/reply:opacity-100 text-zinc-400 hover:text-red-600 transition-all p-1 rounded-md hover:bg-red-50 cursor-pointer"
-                            title="Delete reply"
-                            aria-label="Delete reply"
-                          >
-                            {isThisCommentDeleting ? (
-                              <Loader2 className="h-3 w-3 animate-spin text-red-500" />
-                            ) : (
-                              <Trash2 className="h-3 w-3" />
+                  return (
+                    <div key={comment.id} className="group/reply relative flex gap-3 rounded-2xl bg-zinc-50/90 p-3.5 text-xs transition-colors hover:bg-rose-50/30 border border-zinc-100">
+                      <UserAvatar name={comment.userName} image={comment.userAvatar} size={30} className="flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-zinc-900">{comment.userName}</span>
+                            {isCommentAuthor && (
+                              <span className="rounded-sm bg-rose-100 px-1 text-[9px] font-bold text-rose-700">
+                                You
+                              </span>
                             )}
-                          </button>
-                        )}
+                            <span className="text-[10px] text-zinc-400">•</span>
+                            <span className="text-[10px] text-zinc-400">
+                              {new Date(comment.createdAt).toLocaleDateString(undefined, {
+                                month: 'short',
+                                day: 'numeric'
+                              })}
+                            </span>
+                          </div>
+
+                          {/* Delete Comment Button */}
+                          {canDeleteComment && (
+                            <button
+                              onClick={() => handleDeleteCommentClick(comment.id)}
+                              disabled={isThisCommentDeleting}
+                              className="opacity-0 group-hover/reply:opacity-100 text-zinc-400 hover:text-red-600 transition-all p-1 rounded-md hover:bg-red-50 cursor-pointer"
+                              title="Delete reply"
+                              aria-label="Delete reply"
+                            >
+                              {isThisCommentDeleting ? (
+                                <Loader2 className="h-3 w-3 animate-spin text-red-500" />
+                              ) : (
+                                <Trash2 className="h-3 w-3" />
+                              )}
+                            </button>
+                          )}
+                        </div>
+                        <p className="mt-1 text-zinc-700 leading-relaxed break-words">{comment.content}</p>
                       </div>
-                      <p className="mt-1 text-zinc-700 leading-relaxed break-words">{comment.content}</p>
                     </div>
-                  </div>
-                );
-              })
+                  );
+                })}
+
+                {/* View all remaining replies */}
+                {hasMoreComments && (
+                  <button
+                    onClick={handleLoadAllComments}
+                    disabled={loadingComments}
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-amber-300 bg-amber-50/50 py-2 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-colors cursor-pointer"
+                  >
+                    {loadingComments ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>Loading replies...</span>
+                      </>
+                    ) : (
+                      <>
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        <span>View all {post.commentsCount} replies</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </>
             ) : (
               <p className="text-center text-xs text-zinc-400 py-3 italic">
                 No replies yet. Be the first to start the conversation!

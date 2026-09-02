@@ -34,6 +34,7 @@ interface FeedPageShellProps {
   loadMorePosts?: () => void;
   hasMore?: boolean;
   isLoadingMore?: boolean;
+  isLoading?: boolean;
   showTabs?: boolean;
   activePrompt?: string | null;
   onClearPrompt?: () => void;
@@ -62,6 +63,7 @@ export default function FeedPageShell({
   loadMorePosts,
   hasMore = false,
   isLoadingMore = false,
+  isLoading = false,
   showTabs = true,
   activePrompt,
   onClearPrompt,
@@ -92,11 +94,7 @@ export default function FeedPageShell({
     return () => observer.disconnect();
   }, [loadMorePosts, hasMore, isLoadingMore]);
   
-  const filteredPosts = posts.filter((p) => {
-    const matchesTab = !showTabs || activeTab === 'all' || (p.type || p.category) === activeTab;
-    const matchesMember = selectedMember === 'all' || p.memberId === selectedMember;
-    return matchesTab && matchesMember;
-  });
+  const filteredPosts = posts;
 
   const handlePostCreated = (newPost: Post) => {
     if (setPosts) {
@@ -188,7 +186,26 @@ export default function FeedPageShell({
               </div>
 
               <div className="space-y-4">
-                {filteredPosts.length > 0 ? (
+                {isLoading ? (
+                  <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="rounded-3xl border border-rose-100/70 bg-white/80 p-5 sm:p-6 shadow-sm animate-pulse">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="h-10 w-10 rounded-full bg-rose-200/60" />
+                          <div className="space-y-2">
+                            <div className="h-3 w-28 rounded-full bg-zinc-200" />
+                            <div className="h-2.5 w-20 rounded-full bg-zinc-100" />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="h-3 w-full rounded-full bg-zinc-200" />
+                          <div className="h-3 w-5/6 rounded-full bg-zinc-100" />
+                          <div className="h-3 w-4/6 rounded-full bg-zinc-100" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : filteredPosts.length > 0 ? (
                   <>
                     {filteredPosts.map((post, index) => (
                       <UnifiedPostCard

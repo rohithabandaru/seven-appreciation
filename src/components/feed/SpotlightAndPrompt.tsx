@@ -24,7 +24,7 @@ export default function SpotlightAndPrompt({ onPromptClick }: SpotlightAndPrompt
   }, []);
 
   return (
-    <div className="space-y-6 mb-8">
+    <div className="space-y-4 mb-4">
       {/* MEMBER SPOTLIGHT BANNER */}
       <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6">

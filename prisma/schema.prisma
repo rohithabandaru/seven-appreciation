@@ -90,6 +90,7 @@ model Post {
   @@index([status])
   @@index([memberId])
   @@index([userId])
+  @@index([createdAt])
 }
 
 model Follow {
@@ -131,6 +132,7 @@ model AppreciationMessage {
 
   @@index([status])
   @@index([memberId])
+  @@index([memberId, status])
 }
 
 model MemberPhoto {
@@ -145,6 +147,8 @@ model MemberPhoto {
   likesCount  Int         @default(0)
   createdAt   DateTime    @default(now())
   likes       PhotoLike[]
+
+  @@index([memberSlug])
 }
 
 model Letter {
@@ -182,6 +186,9 @@ model CommunityMilestone {
   status      String          @default("approved") // approved, pending, flagged
   createdAt   DateTime        @default(now())
   likes       MilestoneLike[]
+
+  @@index([status])
+  @@index([memberId])
 }
 
 model BannedIP {
@@ -228,6 +235,10 @@ model Comment {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   content   String   @db.Text
   createdAt DateTime @default(now())
+
+  @@index([postId])
+  @@index([userId])
+  @@index([postId, createdAt])
 }
 
 model SavedItem {
@@ -293,6 +304,7 @@ model PostLike {
   createdAt DateTime @default(now())
 
   @@unique([userId, postId])
+  @@index([postId])
 }
 
 model SecurityLog {

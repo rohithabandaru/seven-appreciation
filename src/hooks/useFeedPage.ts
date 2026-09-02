@@ -11,6 +11,7 @@ export function useFeedPage(initialCategory: string = 'all') {
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>(initialCategory);
   const [selectedMember, setSelectedMember] = useState<MemberSlug | 'all'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -18,9 +19,14 @@ export function useFeedPage(initialCategory: string = 'all') {
   const [reportTarget, setReportTarget] = useState<{ id: string; snippet: string } | null>(null);
 
   const loadPosts = useCallback(async () => {
+    setIsLoading(true);
     try {
-      const memberQuery = selectedMember === 'all' ? '' : `&memberId=${selectedMember}`;
-      const url = `/api/posts?page=1&limit=10${memberQuery}`;
+      const params = new URLSearchParams();
+      params.set('page', '1');
+      params.set('limit', '10');
+      if (activeTab !== 'all') params.set('type', activeTab);
+      if (selectedMember !== 'all') params.set('memberId', selectedMember);
+      const url = `/api/posts?${params.toString()}`;
       const res = await fetch(url);
       if (res.ok) {
         const json = await res.json();
@@ -31,16 +37,22 @@ export function useFeedPage(initialCategory: string = 'all') {
       }
     } catch (err) {
       console.error("Failed to load posts", err);
+    } finally {
+      setIsLoading(false);
     }
-  }, [selectedMember]);
+  }, [selectedMember, activeTab]);
 
   const loadMorePosts = useCallback(async () => {
     if (isLoadingMore || !hasMore) return;
     setIsLoadingMore(true);
     try {
       const nextPage = page + 1;
-      const memberQuery = selectedMember === 'all' ? '' : `&memberId=${selectedMember}`;
-      const url = `/api/posts?page=${nextPage}&limit=10${memberQuery}`;
+      const params = new URLSearchParams();
+      params.set('page', nextPage.toString());
+      params.set('limit', '10');
+      if (activeTab !== 'all') params.set('type', activeTab);
+      if (selectedMember !== 'all') params.set('memberId', selectedMember);
+      const url = `/api/posts?${params.toString()}`;
       const res = await fetch(url);
       if (res.ok) {
         const json = await res.json();
@@ -62,18 +74,18 @@ export function useFeedPage(initialCategory: string = 'all') {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, hasMore, page, selectedMember]);
-
-  useEffect(() => {
-    setActiveTab(initialCategory);
-  }, [initialCategory]);
+  }, [isLoadingMore, hasMore, page, selectedMember, activeTab]);
 
   useEffect(() => {
     let cancelled = false;
     const initialLoad = async () => {
       try {
-        const memberQuery = selectedMember === 'all' ? '' : `&memberId=${selectedMember}`;
-        const url = `/api/posts?page=1&limit=10${memberQuery}`;
+        const params = new URLSearchParams();
+        params.set('page', '1');
+        params.set('limit', '10');
+        if (activeTab !== 'all') params.set('type', activeTab);
+        if (selectedMember !== 'all') params.set('memberId', selectedMember);
+        const url = `/api/posts?${params.toString()}`;
         const res = await fetch(url);
         if (!cancelled && res.ok) {
           const json = await res.json();
@@ -84,12 +96,36 @@ export function useFeedPage(initialCategory: string = 'all') {
         }
       } catch (err) {
         console.error("Failed to load posts", err);
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
     };
     initialLoad();
 
-    const handlePostCreated = () => {
-      loadPosts();
+    // After a new post is created, reconcile the feed by merging the server's
+    // newest page into existing state. We merge (rather than replace) so a
+    // just-created optimistic post is never clobbered by a stale fetch.
+    const handlePostCreated = async () => {
+      try {
+        const params = new URLSearchParams();
+        params.set('page', '1');
+        params.set('limit', '10');
+        if (activeTab !== 'all') params.set('type', activeTab);
+        if (selectedMember !== 'all') params.set('memberId', selectedMember);
+        const res = await fetch(`/api/posts?${params.toString()}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        const data: Post[] = Array.isArray(json) ? json : json.data ?? [];
+        setPosts((prev) => {
+          const existingIds = new Set(prev.map((p) => p.id));
+          const fresh = data.filter((p) => !existingIds.has(p.id));
+          return fresh.length > 0 ? [...fresh, ...prev].slice(0, 10) : prev;
+        });
+        setPage(1);
+        setHasMore(data.length >= 10);
+      } catch (err) {
+        console.error("Failed to refresh posts", err);
+      }
     };
 
     window.addEventListener('postCreated', handlePostCreated);
@@ -97,7 +133,7 @@ export function useFeedPage(initialCategory: string = 'all') {
       cancelled = true;
       window.removeEventListener('postCreated', handlePostCreated);
     };
-  }, [loadPosts, selectedMember]);
+  }, [selectedMember, activeTab]);
 
   const handleLike = async (postId: string) => {
     const post = posts.find((p) => p.id === postId);
@@ -271,5 +307,6 @@ export function useFeedPage(initialCategory: string = 'all') {
     loadMorePosts,
     hasMore,
     isLoadingMore,
+    isLoading,
   };
 }

@@ -128,18 +128,25 @@ export const authOptions: NextAuthOptions = {
         if (session.name) token.name = session.name;
         if (session.image !== undefined) token.picture = session.image;
       } else if (token.sub) {
-        try {
-          const dbUser = await prisma.user.findUnique({
-            where: { id: token.sub },
-            select: { role: true, name: true, image: true },
-          });
-          if (dbUser) {
-            token.role = dbUser.role;
-            if (dbUser.name) token.name = dbUser.name;
-            if (dbUser.image) token.picture = dbUser.image;
+        // Only re-query DB if cache is stale (every 5 minutes) to avoid a DB
+        // round-trip on every authenticated request.
+        const ROLECACHE_TTL_MS = 5 * 60 * 1000;
+        const checkedAt = typeof token.roleCheckedAt === 'number' ? token.roleCheckedAt : 0;
+        if (Date.now() - checkedAt > ROLECACHE_TTL_MS) {
+          try {
+            const dbUser = await prisma.user.findUnique({
+              where: { id: token.sub },
+              select: { role: true, name: true, image: true },
+            });
+            if (dbUser) {
+              token.role = dbUser.role;
+              if (dbUser.name) token.name = dbUser.name;
+              if (dbUser.image) token.picture = dbUser.image;
+            }
+            token.roleCheckedAt = Date.now();
+          } catch {
+            // If DB lookup fails, keep current role to avoid locking users out
           }
-        } catch {
-          // If DB lookup fails, keep current role to avoid locking users out
         }
       }
       return token;

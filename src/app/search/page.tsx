@@ -30,7 +30,7 @@ export default function SearchPage() {
         const res = await fetch(`/api/posts?page=1&limit=50`);
         if (res.ok) {
           const data = await res.json();
-          const allPosts: Post[] = data.posts || [];
+          const allPosts: Post[] = data.data || [];
           // Client-side filter by query
           const filtered = allPosts.filter(
             (p) =>

@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const memberId = searchParams.get('memberId');
+    const type = searchParams.get('type');
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50', 10)));
     const skip = (page - 1) * limit;
@@ -32,6 +33,9 @@ export async function GET(req: NextRequest) {
     const whereClause: Prisma.PostWhereInput = { status: 'approved' };
     if (memberId) {
       whereClause.memberId = memberId;
+    }
+    if (type && type !== 'all') {
+      whereClause.type = type.toLowerCase();
     }
 
     const session = await getServerSession(authOptions);
@@ -47,58 +51,72 @@ export async function GET(req: NextRequest) {
           user: {
             select: { name: true, image: true }
           },
-          _count: { select: { likes: true } },
-          comments: {
-            select: {
-              id: true,
-              postId: true,
-              userId: true,
-              content: true,
-              createdAt: true,
-              user: { select: { name: true, image: true } }
-            },
-            orderBy: { createdAt: 'desc' }
-          }
+          _count: { select: { likes: true, comments: true } },
         }
       }),
       prisma.post.count({ where: whereClause }),
     ]);
 
+    // Fetch latest 3 comments (preview) for each post in this page
+    const postIds = posts.map((p) => p.id);
+    const previewComments = postIds.length > 0
+      ? await prisma.comment.findMany({
+          where: { postId: { in: postIds } },
+          orderBy: { createdAt: 'desc' },
+          take: postIds.length * 3,
+          include: {
+            user: { select: { name: true, image: true } },
+          },
+        })
+      : [];
+    const commentsByPost = new Map<string, typeof previewComments>();
+    for (const c of previewComments) {
+      if (!commentsByPost.has(c.postId)) {
+        commentsByPost.set(c.postId, []);
+      }
+      if (commentsByPost.get(c.postId)!.length < 3) {
+        commentsByPost.get(c.postId)!.push(c);
+      }
+    }
+
     let userLikedPostIds: Set<string> = new Set();
     if (userId) {
       const userLikes = await prisma.postLike.findMany({
-        where: { userId, postId: { in: posts.map((p) => p.id) } },
+        where: { userId, postId: { in: postIds } },
         select: { postId: true },
       });
       userLikedPostIds = new Set(userLikes.map((l) => l.postId));
     }
 
-    const mapped = posts.map((p) => ({
-      id: p.id,
-      memberId: p.memberId,
-      userId: p.userId,
-      userName: p.user?.name || 'Kind Supporter',
-      userAvatar: p.user?.image || null,
-      category: p.type,
-      type: p.type,
-      title: p.title || '',
-      content: p.content || '',
-      imageUrl: p.mediaUrl || null,
-      status: p.status,
-      likesCount: p._count.likes,
-      likedBy: userLikedPostIds.has(p.id) ? [userId] : [],
-      commentsCount: p.comments.length,
-      comments: p.comments.map((c) => ({
-        id: c.id,
-        postId: c.postId,
-        userId: c.userId,
-        userName: c.user?.name || 'Kind Supporter',
-        userAvatar: c.user?.image || null,
-        content: c.content,
-        createdAt: c.createdAt.toISOString(),
-      })),
-      createdAt: p.createdAt.toISOString(),
-    }));
+    const mapped = posts.map((p) => {
+      const previews = commentsByPost.get(p.id) || [];
+      return {
+        id: p.id,
+        memberId: p.memberId,
+        userId: p.userId,
+        userName: p.user?.name || 'Kind Supporter',
+        userAvatar: p.user?.image || null,
+        category: p.type,
+        type: p.type,
+        title: p.title || '',
+        content: p.content || '',
+        imageUrl: p.mediaUrl || null,
+        status: p.status,
+        likesCount: p._count.likes,
+        likedBy: userLikedPostIds.has(p.id) ? [userId] : [],
+        commentsCount: p._count.comments,
+        comments: previews.map((c) => ({
+          id: c.id,
+          postId: c.postId,
+          userId: c.userId,
+          userName: c.user?.name || 'Kind Supporter',
+          userAvatar: c.user?.image || null,
+          content: c.content,
+          createdAt: c.createdAt.toISOString(),
+        })),
+        createdAt: p.createdAt.toISOString(),
+      };
+    });
 
     return new NextResponse(JSON.stringify({
       data: mapped,

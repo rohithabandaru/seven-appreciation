@@ -21,9 +21,9 @@ export default function Home() {
   };
 
   const header = (
-    <div className="mb-6">
+    <div className="mb-3">
       <SpotlightAndPrompt onPromptClick={handlePromptClick} />
-      <div className="py-6 text-center">
+      <div className="py-3 text-center">
         <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-zinc-900 mb-2">
           Celebrate Their Artistry.{' '}
           <span className="text-rose-500">Share Pure Love.</span>
@@ -55,6 +55,7 @@ export default function Home() {
         loadMorePosts={feed.loadMorePosts}
         hasMore={feed.hasMore}
         isLoadingMore={feed.isLoadingMore}
+        isLoading={feed.isLoading}
         activePrompt={activePrompt}
         onClearPrompt={() => setActivePrompt(null)}
         emptyIcon={Heart}
