@@ -81,3 +81,15 @@ export const targetIdSchema = z.object({
 export const likeSchema = z.object({
   id: z.string().min(1, 'Target ID is required'),
 });
+
+export const liveMessageSchema = z.object({
+  channel: z
+    .string()
+    .min(1, 'Channel is required')
+    .max(60, 'Channel is invalid')
+    .regex(/^[a-zA-Z0-9_-]+$/, 'Channel is invalid'),
+  content: z
+    .string()
+    .min(1, 'Message cannot be empty')
+    .max(500, 'Message is too long'),
+});

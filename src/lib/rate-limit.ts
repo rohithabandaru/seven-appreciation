@@ -162,6 +162,12 @@ export const RATE_LIMIT_POLICIES = {
 
   /** NextAuth session endpoint: 30 per 5 minutes per IP */
   session: { windowMs: 5 * 60 * 1000, maxRequests: 30 },
+
+  /** Live Lounge messages: 20 per 5 minutes per user */
+  liveMessage: { windowMs: 5 * 60 * 1000, maxRequests: 20 },
+
+  /** Live Lounge hearts: 30 per 5 minutes per user */
+  liveHeart: { windowMs: 5 * 60 * 1000, maxRequests: 30 },
 } as const;
 
 // ── Helper: apply rate limit and return 429 response ─────────────────────────
