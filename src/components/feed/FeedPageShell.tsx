@@ -107,7 +107,7 @@ export default function FeedPageShell({
       <Navbar />
 
       <main className="flex-1 py-4 sm:py-6 px-4">
-        <div className="mx-auto max-w-[720px]">
+        <div className="mx-auto w-full max-w-7xl">
           {header}
 
           <div className="mt-4 space-y-6">
