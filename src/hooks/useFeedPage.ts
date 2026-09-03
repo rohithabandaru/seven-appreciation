@@ -4,7 +4,11 @@ import { useRouter } from 'next/navigation';
 import useSWRInfinite from 'swr/infinite';
 import { Post, Comment, MemberSlug } from '@/types';
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Failed to fetch data');
+  return res.json();
+};
 
 export function useFeedPage(initialCategory: string = 'all') {
   const { data: session } = useSession();
@@ -31,7 +35,6 @@ export function useFeedPage(initialCategory: string = 'all') {
 
   const { data, error, size, setSize, mutate, isValidating } = useSWRInfinite(getKey, fetcher, {
     revalidateFirstPage: false,
-    revalidateOnFocus: false, // Don't constantly refetch on focus to save DB calls
   });
 
   const posts: Post[] = data ? [].concat(...data.map(page => page.data || [])) : [];
@@ -176,7 +179,13 @@ export function useFeedPage(initialCategory: string = 'all') {
 
   const handleSetTab = (tab: string) => {
     setActiveTab(tab);
+    setSize(1);
     router.replace(`/?tab=${encodeURIComponent(tab)}`, { scroll: false });
+  };
+
+  const handleSetMember = (member: MemberSlug | 'all') => {
+    setSelectedMember(member);
+    setSize(1);
   };
 
   return {
@@ -185,7 +194,7 @@ export function useFeedPage(initialCategory: string = 'all') {
     activeTab,
     setActiveTab: handleSetTab,
     selectedMember,
-    setSelectedMember,
+    setSelectedMember: handleSetMember,
     showCreateModal,
     setShowCreateModal,
     toast,
