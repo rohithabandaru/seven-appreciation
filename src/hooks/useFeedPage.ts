@@ -1,139 +1,81 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import useSWRInfinite from 'swr/infinite';
 import { Post, Comment, MemberSlug } from '@/types';
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export function useFeedPage(initialCategory: string = 'all') {
   const { data: session } = useSession();
   const userId = session?.user?.id;
   const router = useRouter();
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [page, setPage] = useState<number>(1);
-  const [hasMore, setHasMore] = useState<boolean>(true);
-  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   const [activeTab, setActiveTab] = useState<string>(initialCategory);
   const [selectedMember, setSelectedMember] = useState<MemberSlug | 'all'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'warning' | 'error'; title: string; message: string } | null>(null);
   const [reportTarget, setReportTarget] = useState<{ id: string; snippet: string } | null>(null);
 
-  const loadPosts = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const params = new URLSearchParams();
-      params.set('page', '1');
-      params.set('limit', '10');
-      if (activeTab !== 'all') params.set('type', activeTab);
-      if (selectedMember !== 'all') params.set('memberId', selectedMember);
-      const url = `/api/posts?${params.toString()}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const json = await res.json();
-        const data: Post[] = Array.isArray(json) ? json : json.data ?? [];
-        setPosts(data);
-        setPage(1);
-        setHasMore(data.length >= 10);
-      }
-    } catch (err) {
-      console.error("Failed to load posts", err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedMember, activeTab]);
+  const getKey = (pageIndex: number, previousPageData: any) => {
+    // Reached the end
+    if (previousPageData && (!previousPageData.data || previousPageData.data.length === 0)) return null;
+    
+    const params = new URLSearchParams();
+    params.set('page', (pageIndex + 1).toString());
+    params.set('limit', '10');
+    if (activeTab !== 'all') params.set('type', activeTab);
+    if (selectedMember !== 'all') params.set('memberId', selectedMember);
+    return `/api/posts?${params.toString()}`;
+  };
 
-  const loadMorePosts = useCallback(async () => {
-    if (isLoadingMore || !hasMore) return;
-    setIsLoadingMore(true);
-    try {
-      const nextPage = page + 1;
-      const params = new URLSearchParams();
-      params.set('page', nextPage.toString());
-      params.set('limit', '10');
-      if (activeTab !== 'all') params.set('type', activeTab);
-      if (selectedMember !== 'all') params.set('memberId', selectedMember);
-      const url = `/api/posts?${params.toString()}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const json = await res.json();
-        const newPosts: Post[] = Array.isArray(json) ? json : json.data ?? [];
-        if (newPosts.length > 0) {
-          setPosts((prev) => {
-            const existingIds = new Set(prev.map((p) => p.id));
-            const filtered = newPosts.filter((p) => !existingIds.has(p.id));
-            return [...prev, ...filtered];
-          });
-          setPage(nextPage);
-          setHasMore(newPosts.length >= 10);
-        } else {
-          setHasMore(false);
-        }
+  const { data, error, size, setSize, mutate, isValidating } = useSWRInfinite(getKey, fetcher, {
+    revalidateFirstPage: false,
+    revalidateOnFocus: false, // Don't constantly refetch on focus to save DB calls
+  });
+
+  const posts: Post[] = data ? [].concat(...data.map(page => page.data || [])) : [];
+  
+  const isLoading = !data && !error;
+  const isLoadingMore = isLoading || (size > 0 && data && typeof data[size - 1] === "undefined");
+  const hasMore = data ? (data[data.length - 1]?.data?.length >= 10) : true;
+
+  const setPosts = useCallback((updater: React.SetStateAction<Post[]>) => {
+    mutate((currentPages: any) => {
+      if (!currentPages) return currentPages;
+      const currentPosts = [].concat(...currentPages.map((p: any) => p.data || []));
+      const newPosts = typeof updater === 'function' ? updater(currentPosts) : updater;
+      
+      const newPages = [];
+      const chunkSize = 10;
+      for (let i = 0; i < newPosts.length; i += chunkSize) {
+        newPages.push({ data: newPosts.slice(i, i + chunkSize) });
       }
-    } catch (err) {
-      console.error("Failed to load more posts", err);
-    } finally {
-      setIsLoadingMore(false);
+      return newPages.length > 0 ? newPages : [{ data: [] }];
+    }, { revalidate: false });
+  }, [mutate]);
+
+  const loadPosts = useCallback(() => {
+    mutate();
+  }, [mutate]);
+
+  const loadMorePosts = useCallback(() => {
+    if (!isLoadingMore && hasMore) {
+      setSize(size + 1);
     }
-  }, [isLoadingMore, hasMore, page, selectedMember, activeTab]);
+  }, [isLoadingMore, hasMore, size, setSize]);
 
   useEffect(() => {
-    let cancelled = false;
-    const initialLoad = async () => {
-      try {
-        const params = new URLSearchParams();
-        params.set('page', '1');
-        params.set('limit', '10');
-        if (activeTab !== 'all') params.set('type', activeTab);
-        if (selectedMember !== 'all') params.set('memberId', selectedMember);
-        const url = `/api/posts?${params.toString()}`;
-        const res = await fetch(url);
-        if (!cancelled && res.ok) {
-          const json = await res.json();
-          const data: Post[] = Array.isArray(json) ? json : json.data ?? [];
-          setPosts(data);
-          setPage(1);
-          setHasMore(data.length >= 10);
-        }
-      } catch (err) {
-        console.error("Failed to load posts", err);
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    };
-    initialLoad();
-
-    // After a new post is created, reconcile the feed by merging the server's
-    // newest page into existing state. We merge (rather than replace) so a
-    // just-created optimistic post is never clobbered by a stale fetch.
-    const handlePostCreated = async () => {
-      try {
-        const params = new URLSearchParams();
-        params.set('page', '1');
-        params.set('limit', '10');
-        if (activeTab !== 'all') params.set('type', activeTab);
-        if (selectedMember !== 'all') params.set('memberId', selectedMember);
-        const res = await fetch(`/api/posts?${params.toString()}`);
-        if (!res.ok) return;
-        const json = await res.json();
-        const data: Post[] = Array.isArray(json) ? json : json.data ?? [];
-        setPosts((prev) => {
-          const existingIds = new Set(prev.map((p) => p.id));
-          const fresh = data.filter((p) => !existingIds.has(p.id));
-          return fresh.length > 0 ? [...fresh, ...prev].slice(0, 10) : prev;
-        });
-        setPage(1);
-        setHasMore(data.length >= 10);
-      } catch (err) {
-        console.error("Failed to refresh posts", err);
-      }
+    const handlePostCreatedEvent = () => {
+      // Revalidate page 1 to get the new post
+      mutate();
     };
 
-    window.addEventListener('postCreated', handlePostCreated);
+    window.addEventListener('postCreated', handlePostCreatedEvent);
     return () => {
-      cancelled = true;
-      window.removeEventListener('postCreated', handlePostCreated);
+      window.removeEventListener('postCreated', handlePostCreatedEvent);
     };
-  }, [selectedMember, activeTab]);
+  }, [mutate]);
 
   const handleLike = async (postId: string) => {
     const post = posts.find((p) => p.id === postId);
@@ -142,7 +84,7 @@ export function useFeedPage(initialCategory: string = 'all') {
     const alreadyLiked = post.likedBy?.includes(userId);
     const action = alreadyLiked ? 'unlike' : 'like';
 
-    const updated = posts.map((p) => {
+    setPosts((prev) => prev.map((p) => {
       if (p.id === postId) {
         return {
           ...p,
@@ -153,8 +95,7 @@ export function useFeedPage(initialCategory: string = 'all') {
         };
       }
       return p;
-    });
-    setPosts(updated);
+    }));
 
     try {
       const res = await fetch('/api/posts', {
@@ -164,16 +105,12 @@ export function useFeedPage(initialCategory: string = 'all') {
       });
       if (res.ok) {
         const result = await res.json();
-        setPosts((prev) =>
-          prev.map((p) =>
-            p.id === postId ? { ...p, likesCount: result.likesCount } : p
-          )
-        );
+        setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, likesCount: result.likesCount } : p));
       } else {
-        loadPosts();
+        mutate();
       }
     } catch {
-      loadPosts();
+      mutate();
     }
   };
 
@@ -186,98 +123,54 @@ export function useFeedPage(initialCategory: string = 'all') {
       });
       if (res.ok) {
         const createdComment = await res.json();
-        setPosts((prev) =>
-          prev.map((p) =>
-            p.id === postId
-              ? {
-                  ...p,
-                  commentsCount: (p.commentsCount || 0) + 1,
-                  comments: [createdComment, ...(p.comments || [])],
-                }
-              : p
-          )
-        );
+        setPosts((prev) => prev.map((p) => p.id === postId ? {
+          ...p,
+          commentsCount: (p.commentsCount || 0) + 1,
+          comments: [createdComment, ...(p.comments || [])],
+        } : p));
       }
     } catch {
-      await loadPosts();
+      mutate();
     }
   };
 
   const handleDeletePost = async (postId: string) => {
-    const prevPosts = [...posts];
     setPosts((prev) => prev.filter((p) => p.id !== postId));
 
     try {
-      const res = await fetch(`/api/posts/${postId}`, {
-        method: 'DELETE',
-      });
-
+      const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
       if (res.ok) {
-        setToast({
-          type: 'success',
-          title: 'Post Deleted',
-          message: 'Your post was successfully removed.',
-        });
+        setToast({ type: 'success', title: 'Post Deleted', message: 'Your post was successfully removed.' });
       } else {
         const err = await res.json().catch(() => ({}));
-        setPosts(prevPosts);
-        setToast({
-          type: 'error',
-          title: 'Failed to Delete',
-          message: err.error || 'Could not delete the post. Please try again.',
-        });
+        mutate();
+        setToast({ type: 'error', title: 'Failed to Delete', message: err.error || 'Could not delete the post.' });
       }
     } catch {
-      setPosts(prevPosts);
-      setToast({
-        type: 'error',
-        title: 'Error',
-        message: 'Network error occurred while deleting the post.',
-      });
+      mutate();
+      setToast({ type: 'error', title: 'Error', message: 'Network error occurred while deleting the post.' });
     }
   };
 
   const handleDeleteComment = async (postId: string, commentId: string) => {
-    const prevPosts = [...posts];
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId
-          ? {
-              ...p,
-              commentsCount: Math.max(0, (p.commentsCount || 1) - 1),
-              comments: (p.comments || []).filter((c) => c.id !== commentId),
-            }
-          : p
-      )
-    );
+    setPosts((prev) => prev.map((p) => p.id === postId ? {
+      ...p,
+      commentsCount: Math.max(0, (p.commentsCount || 1) - 1),
+      comments: (p.comments || []).filter((c) => c.id !== commentId),
+    } : p));
 
     try {
-      const res = await fetch(`/api/posts/${postId}/comments/${commentId}`, {
-        method: 'DELETE',
-      });
-
+      const res = await fetch(`/api/posts/${postId}/comments/${commentId}`, { method: 'DELETE' });
       if (res.ok) {
-        setToast({
-          type: 'success',
-          title: 'Reply Deleted',
-          message: 'Your reply has been removed.',
-        });
+        setToast({ type: 'success', title: 'Reply Deleted', message: 'Your reply has been removed.' });
       } else {
         const err = await res.json().catch(() => ({}));
-        setPosts(prevPosts);
-        setToast({
-          type: 'error',
-          title: 'Failed to Delete Reply',
-          message: err.error || 'Could not delete reply.',
-        });
+        mutate();
+        setToast({ type: 'error', title: 'Failed to Delete Reply', message: err.error || 'Could not delete reply.' });
       }
     } catch {
-      setPosts(prevPosts);
-      setToast({
-        type: 'error',
-        title: 'Error',
-        message: 'Network error occurred while deleting the reply.',
-      });
+      mutate();
+      setToast({ type: 'error', title: 'Error', message: 'Network error occurred while deleting the reply.' });
     }
   };
 
