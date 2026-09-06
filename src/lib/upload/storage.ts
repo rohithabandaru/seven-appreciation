@@ -28,10 +28,18 @@ export async function storagePut(
 ): Promise<StoragePutResult> {
   const storageKey = generateStorageKey(category, userId, extension);
   const filePath = path.join(BASE_DIR, storageKey);
-  const dir = path.dirname(filePath);
 
-  await fs.mkdir(dir, { recursive: true, mode: 0o755 });
-  await fs.writeFile(filePath, buffer, { mode: 0o644 });
+  // Best-effort local disk write for local development.
+  // In production (Vercel serverless) the filesystem is read-only,
+  // so we must NOT fail the upload here — the file is persisted in the
+  // database (fileData) and served from there instead.
+  try {
+    const dir = path.dirname(filePath);
+    await fs.mkdir(dir, { recursive: true, mode: 0o755 });
+    await fs.writeFile(filePath, buffer, { mode: 0o644 });
+  } catch {
+    // ignore — DB persistence and DB-backed serving keep uploads working
+  }
 
   return {
     storageKey,
