@@ -321,6 +321,17 @@ model SecurityLog {
   @@index([createdAt])
 }
 
+model RateLimit {
+  id          String   @id @default(cuid())
+  key         String
+  windowStart DateTime
+  hits        Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  @@unique([key, windowStart])
+  @@index([updatedAt])
+}
+
 model VisitLog {
   id          String   @id @default(cuid())
   fingerprint String

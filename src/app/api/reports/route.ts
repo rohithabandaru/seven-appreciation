@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const rl = checkRateLimit('admin:' + session.user.id, RATE_LIMIT_POLICIES.admin);
+    const rl = await checkRateLimit('admin:' + session.user.id, RATE_LIMIT_POLICIES.admin);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     const { searchParams } = new URL(req.url);
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     const sizeError = await checkPayloadSize(req);
     if (sizeError) return sizeError;
 
-    const rl = checkRateLimit('report:' + session.user.id, RATE_LIMIT_POLICIES.report);
+    const rl = await checkRateLimit('report:' + session.user.id, RATE_LIMIT_POLICIES.report);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     const body = await req.json();

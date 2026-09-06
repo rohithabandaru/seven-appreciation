@@ -17,7 +17,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const rl = checkRateLimit('admin:' + session.user.id, RATE_LIMIT_POLICIES.admin);
+    const rl = await checkRateLimit('admin:' + session.user.id, RATE_LIMIT_POLICIES.admin);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     const { id: reportId } = await params;

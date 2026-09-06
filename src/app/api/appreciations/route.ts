@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     const ip = getClientIp(request as unknown as Request);
     const sizeError = await checkPayloadSize(request as unknown as Request);
     if (sizeError) return sizeError;
-    const rl = checkRateLimit('appreciation:' + session.user.id, RATE_LIMIT_POLICIES.appreciation);
+    const rl = await checkRateLimit('appreciation:' + session.user.id, RATE_LIMIT_POLICIES.appreciation);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     const body = await request.json()
@@ -102,7 +102,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const rl = checkRateLimit('like:' + session.user.id, RATE_LIMIT_POLICIES.like);
+    const rl = await checkRateLimit('like:' + session.user.id, RATE_LIMIT_POLICIES.like);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     const body = await request.json()

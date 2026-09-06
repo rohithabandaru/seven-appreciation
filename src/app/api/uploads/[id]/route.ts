@@ -23,7 +23,7 @@ export async function DELETE(
     const { id } = await params;
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
 
-    const rl = checkRateLimit(`delete-upload:${userId}`, DELETE_RATE_LIMIT);
+    const rl = await checkRateLimit(`delete-upload:${userId}`, DELETE_RATE_LIMIT);
     if (!rl.allowed) {
       return rateLimitResponse(rl.retryAfterMs);
     }

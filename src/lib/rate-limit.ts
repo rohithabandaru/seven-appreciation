@@ -1,39 +1,23 @@
 /**
- * In-memory sliding-window rate limiter.
+ * Fixed-window rate limiter backed by the database.
  *
- * Architecture: single-server (next start) — one Node.js process.
- * In-memory is appropriate: simple, zero dependencies, no DB overhead.
+ * Architecture: Vercel serverless (multiple ephemeral instances). An
+ * in-memory limiter would be per-instance, letting an attacker spread
+ * attempts across instances. Persisting state to Postgres shares the
+ * limit across all instances, so abuse prevention is exact regardless
+ * of how many serverless instances a request lands on.
  *
- * For serverless/multi-instance, replace with a shared store (e.g., Redis, Postgres).
+ * A fixed-window counter per (key, windowStart) with an atomic upsert
+ * is used: it is race-free under concurrent requests, keeps one row per
+ * window (bounded growth), and each request is a single round-trip.
+ *
+ * Stale rows are pruned periodically so the table never grows unbounded.
  */
 
-interface RateLimitEntry {
-  timestamps: number[];
-}
+import { prisma } from '@/lib/prisma';
 
-const store = new Map<string, RateLimitEntry>();
-
-// Periodic cleanup every 5 minutes — removes entries with no recent requests.
-const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
-let lastCleanup = Date.now();
-
-function cleanup() {
-  const now = Date.now();
-  if (now - lastCleanup < CLEANUP_INTERVAL_MS) return;
-  lastCleanup = now;
-
-  const maxWindow = Math.max(
-    ...Object.values(RATE_LIMIT_POLICIES).map((p) => p.windowMs)
-  );
-  const cutoff = now - maxWindow;
-
-  for (const [key, entry] of store) {
-    entry.timestamps = entry.timestamps.filter((t) => t > cutoff);
-    if (entry.timestamps.length === 0) {
-      store.delete(key);
-    }
-  }
-}
+const OLD_WINDOWS_MS = 24 * 60 * 60 * 1000;
+const PRUNE_PROBABILITY = 0.01;
 
 export interface RateLimitPolicy {
   /** Time window in milliseconds */
@@ -50,69 +34,68 @@ export interface RateLimitResult {
 }
 
 /**
- * Check rate limit for a given key under a given policy.
- * Returns whether the request is allowed and metadata.
+ * Check rate limit for a key under a policy.
+ * Records the hit and returns whether the request is allowed.
  */
-export function checkRateLimit(
+export async function checkRateLimit(
   key: string,
   policy: RateLimitPolicy
-): RateLimitResult {
-  cleanup();
-
+): Promise<RateLimitResult> {
   const now = Date.now();
-  const windowStart = now - policy.windowMs;
+  const windowStart = new Date(Math.floor(now / policy.windowMs) * policy.windowMs);
 
-  let entry = store.get(key);
-  if (!entry) {
-    entry = { timestamps: [] };
-    store.set(key, entry);
+  if (Math.random() < PRUNE_PROBABILITY) {
+    void pruneStaleWindows();
   }
 
-  // Remove timestamps outside the window
-  entry.timestamps = entry.timestamps.filter((t) => t > windowStart);
+  const record = await prisma.rateLimit.upsert({
+    where: { key_windowStart: { key, windowStart } },
+    update: { hits: { increment: 1 } },
+    create: { key, windowStart, hits: 1 },
+  });
 
-  const totalHits = entry.timestamps.length;
-
-  if (totalHits >= policy.maxRequests) {
-    const oldestInWindow = entry.timestamps[0];
-    const retryAfterMs = oldestInWindow + policy.windowMs - now;
-    return {
-      allowed: false,
-      remaining: 0,
-      retryAfterMs: Math.max(retryAfterMs, 1000),
-      totalHits,
-    };
+  const totalHits = record.hits;
+  if (totalHits > policy.maxRequests) {
+    const elapsedMs = now - windowStart.getTime();
+    const retryAfterMs = Math.max(policy.windowMs - elapsedMs, 1000);
+    return { allowed: false, remaining: 0, retryAfterMs, totalHits };
   }
 
-  entry.timestamps.push(now);
   return {
     allowed: true,
-    remaining: policy.maxRequests - totalHits - 1,
+    remaining: policy.maxRequests - totalHits,
     retryAfterMs: 0,
-    totalHits: totalHits + 1,
+    totalHits,
   };
 }
 
 /**
- * Get the current hit count for a key within a policy window (without incrementing).
+ * Get the current hit count for a key within the current window (without incrementing).
  */
-export function getHitCount(key: string, policy: RateLimitPolicy): number {
+export async function getHitCount(key: string, policy: RateLimitPolicy): Promise<number> {
   const now = Date.now();
-  const windowStart = now - policy.windowMs;
-  const entry = store.get(key);
-  if (!entry) return 0;
-  return entry.timestamps.filter((t) => t > windowStart).length;
+  const windowStart = new Date(Math.floor(now / policy.windowMs) * policy.windowMs);
+  const record = await prisma.rateLimit.findUnique({
+    where: { key_windowStart: { key, windowStart } },
+  });
+  return record?.hits ?? 0;
 }
 
 /**
- * Reset/clear rate limit timestamps for a specific key (or clear all entries if no key is provided).
+ * Reset/clear rate limit rows for a specific key (or clear all entries if no key is provided).
  */
-export function resetRateLimit(key?: string): void {
+export async function resetRateLimit(key?: string): Promise<void> {
   if (key) {
-    store.delete(key);
-  } else {
-    store.clear();
+    await prisma.rateLimit.deleteMany({ where: { key } });
+    return;
   }
+  await prisma.rateLimit.deleteMany({});
+}
+
+/** Remove rows whose window fully elapsed (all policies use windows < 1h). */
+async function pruneStaleWindows(): Promise<void> {
+  const cutoff = new Date(Date.now() - OLD_WINDOWS_MS);
+  await prisma.rateLimit.deleteMany({ where: { updatedAt: { lt: cutoff } } });
 }
 
 // ── Rate Limit Policies ──────────────────────────────────────────────────────

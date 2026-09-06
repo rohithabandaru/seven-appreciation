@@ -21,6 +21,39 @@ import { logSecurityEvent } from '@/lib/security-logger';
 // ── Mock Prisma for regression tests ─────────────────────────────────────────
 
 let mockSession: any = null;
+
+// In-memory store so the DB-backed rate limiter is testable without a database.
+const rateLimitStore = new Map<string, { key: string; windowStart: Date; hits: number; updatedAt: Date }>();
+const storeKey = (key: string, windowStart: Date) => `${key}:${windowStart.toISOString()}`;
+
+const mockRateLimit = {
+  upsert: jest.fn(({ where, update, create }: any) => {
+    const k = storeKey(where.key_windowStart.key, where.key_windowStart.windowStart);
+    const existing = rateLimitStore.get(k);
+    if (existing) {
+      existing.hits += update?.hits?.increment ?? 1;
+      existing.updatedAt = new Date();
+      return Promise.resolve(existing);
+    }
+    const record = { key: create.key, windowStart: create.windowStart, hits: create.hits ?? 1, updatedAt: new Date() };
+    rateLimitStore.set(k, record);
+    return Promise.resolve(record);
+  }),
+  findUnique: jest.fn(({ where }: any) =>
+    Promise.resolve(rateLimitStore.get(storeKey(where.key_windowStart.key, where.key_windowStart.windowStart)) ?? null)
+  ),
+  deleteMany: jest.fn(({ where }: any = {}) => {
+    const cutoff = where?.updatedAt?.lt;
+    for (const k of [...rateLimitStore.keys()]) {
+      const rec = rateLimitStore.get(k)!;
+      if (where?.key && !k.startsWith(`${where.key}:`)) continue;
+      if (cutoff && rec.updatedAt >= cutoff) continue;
+      rateLimitStore.delete(k);
+    }
+    return Promise.resolve({ count: 0 });
+  }),
+};
+
 const mockPrisma: any = {
   user: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
   uploadedFile: { count: jest.fn(), aggregate: jest.fn(), create: jest.fn(), findUnique: jest.fn(), delete: jest.fn() },
@@ -32,11 +65,14 @@ const mockPrisma: any = {
   appreciationMessage: { update: jest.fn(), findUnique: jest.fn() },
   letter: { findMany: jest.fn(), count: jest.fn().mockResolvedValue(0) },
   moderationAction: { create: jest.fn() },
+  rateLimit: mockRateLimit,
   unlockedPhotocard: { createMany: jest.fn((args?: any) => Promise.resolve({ count: args?.data?.length ?? 3 })), findMany: jest.fn().mockResolvedValue([]) },
   $transaction: jest.fn((fns: any[]) => Promise.all(fns)),
 };
 
-jest.mock('@/lib/prisma', () => ({ prisma: mockPrisma }));
+jest.mock('@/lib/prisma', () => ({
+  get prisma() { return mockPrisma; },
+}));
 jest.mock('next-auth/next', () => ({
   getServerSession: jest.fn(() => Promise.resolve(mockSession)),
 }));
@@ -521,34 +557,34 @@ describe('REG-015: Rate-Limit Bypass', () => {
     return `${prefix}:reg015-${keyCounter}-${Date.now()}`;
   }
 
-  it('login rate limit blocks after 5 attempts', () => {
+  it('login rate limit blocks after 5 attempts', async () => {
     const key = uniqueKey('login');
     const policy = RATE_LIMIT_POLICIES.login;
-    for (let i = 0; i < 5; i++) checkRateLimit(key, policy);
-    expect(checkRateLimit(key, policy).allowed).toBe(false);
+    for (let i = 0; i < 5; i++) await checkRateLimit(key, policy);
+    expect((await checkRateLimit(key, policy)).allowed).toBe(false);
   });
 
-  it('register rate limit blocks after 3 per hour', () => {
+  it('register rate limit blocks after 3 per hour', async () => {
     const key = uniqueKey('register');
     const policy = RATE_LIMIT_POLICIES.register;
-    for (let i = 0; i < 3; i++) checkRateLimit(key, policy);
-    expect(checkRateLimit(key, policy).allowed).toBe(false);
+    for (let i = 0; i < 3; i++) await checkRateLimit(key, policy);
+    expect((await checkRateLimit(key, policy)).allowed).toBe(false);
   });
 
-  it('appreciation rate limit blocks after 10 per hour', () => {
+  it('appreciation rate limit blocks after 10 per hour', async () => {
     const key = uniqueKey('appreciation');
     const policy = RATE_LIMIT_POLICIES.appreciation;
-    for (let i = 0; i < 10; i++) checkRateLimit(key, policy);
-    expect(checkRateLimit(key, policy).allowed).toBe(false);
+    for (let i = 0; i < 10; i++) await checkRateLimit(key, policy);
+    expect((await checkRateLimit(key, policy)).allowed).toBe(false);
   });
 
-  it('different users have independent limits', () => {
+  it('different users have independent limits', async () => {
     const policy = { windowMs: 60000, maxRequests: 1 };
     const keyA = uniqueKey('userA');
     const keyB = uniqueKey('userB');
-    checkRateLimit(keyA, policy);
-    expect(checkRateLimit(keyA, policy).allowed).toBe(false);
-    expect(checkRateLimit(keyB, policy).allowed).toBe(true);
+    await checkRateLimit(keyA, policy);
+    expect((await checkRateLimit(keyA, policy)).allowed).toBe(false);
+    expect((await checkRateLimit(keyB, policy)).allowed).toBe(true);
   });
 });
 

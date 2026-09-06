@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const rl = checkRateLimit('liveHeart:' + session.user.id, RATE_LIMIT_POLICIES.liveHeart);
+    const rl = await checkRateLimit('liveHeart:' + session.user.id, RATE_LIMIT_POLICIES.liveHeart);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     const body = await request.json();

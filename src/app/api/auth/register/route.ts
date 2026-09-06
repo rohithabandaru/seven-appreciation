@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   const sizeError = await checkPayloadSize(req);
   if (sizeError) return sizeError;
 
-  const rl = checkRateLimit('register:' + ip, RATE_LIMIT_POLICIES.register);
+  const rl = await checkRateLimit('register:' + ip, RATE_LIMIT_POLICIES.register);
   if (!rl.allowed) {
     logSecurityEvent({ event: 'registration_blocked', ip, endpoint: '/api/auth/register' });
     return rateLimitResponse(rl.retryAfterMs);

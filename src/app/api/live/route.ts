@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     const ip = getClientIp(request);
     const sizeError = await checkPayloadSize(request);
     if (sizeError) return sizeError;
-    const rl = checkRateLimit('liveMessage:' + session.user.id, RATE_LIMIT_POLICIES.liveMessage);
+    const rl = await checkRateLimit('liveMessage:' + session.user.id, RATE_LIMIT_POLICIES.liveMessage);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     const body = await request.json();

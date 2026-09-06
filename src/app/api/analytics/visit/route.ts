@@ -16,7 +16,7 @@ function fingerprint(ip: string, userAgent: string): string {
 export async function POST(request: Request) {
   try {
     const ip = getClientIp(request);
-    const rl = checkRateLimit('visit:' + ip, RATE_LIMIT_POLICIES.analyticsTrack);
+    const rl = await checkRateLimit('visit:' + ip, RATE_LIMIT_POLICIES.analyticsTrack);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     const userAgent = request.headers.get('user-agent') || '';

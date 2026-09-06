@@ -17,7 +17,7 @@ export async function DELETE(
     }
 
     const ip = getClientIp(req as unknown as Request);
-    const rl = checkRateLimit('delete_comment:' + session.user.id, RATE_LIMIT_POLICIES.comment);
+    const rl = await checkRateLimit('delete_comment:' + session.user.id, RATE_LIMIT_POLICIES.comment);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     const { postId, commentId } = await params;

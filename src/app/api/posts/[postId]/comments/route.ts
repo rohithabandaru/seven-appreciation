@@ -63,7 +63,7 @@ export async function POST(
     const ip = getClientIp(req as unknown as Request);
     const sizeError = await checkPayloadSize(req as unknown as Request);
     if (sizeError) return sizeError;
-    const rl = checkRateLimit('comment:' + session.user.id, RATE_LIMIT_POLICIES.comment);
+    const rl = await checkRateLimit('comment:' + session.user.id, RATE_LIMIT_POLICIES.comment);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     const { postId } = await params;

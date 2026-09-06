@@ -28,12 +28,12 @@ export const authOptions: NextAuthOptions = {
 
         const ip = getClientIp(req as unknown as Request);
 
-        const rlCheck = checkRateLimit('login:' + ip, RATE_LIMIT_POLICIES.login);
+        const rlCheck = await checkRateLimit('login:' + ip, RATE_LIMIT_POLICIES.login);
         if (!rlCheck.allowed) {
           throw new Error("Too many login attempts. Please try again later.");
         }
 
-        const rlEmailCheck = checkRateLimit('login-email:' + email, RATE_LIMIT_POLICIES.loginPerEmail);
+        const rlEmailCheck = await checkRateLimit('login-email:' + email, RATE_LIMIT_POLICIES.loginPerEmail);
         if (!rlEmailCheck.allowed) {
           throw new Error("Too many login attempts. Please try again later.");
         }
@@ -74,8 +74,8 @@ export const authOptions: NextAuthOptions = {
         }
 
         logSecurityEvent({ event: 'successful_login', ip, email, endpoint: '/api/auth/login' });
-        resetRateLimit('login:' + ip);
-        resetRateLimit('login-email:' + email);
+        await resetRateLimit('login:' + ip);
+        await resetRateLimit('login-email:' + email);
         return {
           id: user.id,
           name: user.name,

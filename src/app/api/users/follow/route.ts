@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     const sizeError = await checkPayloadSize(req);
     if (sizeError) return sizeError;
 
-    const rl = checkRateLimit('follow:' + session.user.id, RATE_LIMIT_POLICIES.follow);
+    const rl = await checkRateLimit('follow:' + session.user.id, RATE_LIMIT_POLICIES.follow);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     const body = await req.json();

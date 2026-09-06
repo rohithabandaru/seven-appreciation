@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     const ip = getClientIp(request as unknown as Request);
     const sizeError = await checkPayloadSize(request as unknown as Request);
     if (sizeError) return sizeError;
-    const rl = checkRateLimit('letter:' + session.user.id, RATE_LIMIT_POLICIES.letter);
+    const rl = await checkRateLimit('letter:' + session.user.id, RATE_LIMIT_POLICIES.letter);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     const body = await request.json()

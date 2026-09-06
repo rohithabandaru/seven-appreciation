@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const userId = session.user.id;
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
 
-    const rl = checkRateLimit(`upload:${userId}`, UPLOAD_RATE_LIMIT_POLICY);
+    const rl = await checkRateLimit(`upload:${userId}`, UPLOAD_RATE_LIMIT_POLICY);
     if (!rl.allowed) {
       debugLog('REJECT 429 rate-limited');
       return rateLimitResponse(rl.retryAfterMs);
