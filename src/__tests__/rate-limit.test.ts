@@ -4,6 +4,8 @@ import {
   RATE_LIMIT_POLICIES,
   rateLimitResponse,
   checkPayloadSize,
+  readJsonBodySizeLimited,
+  MAX_BODY_BYTES,
 } from '@/lib/rate-limit';
 
 // In-memory store so the DB-backed rate limiter is testable without a database.
@@ -224,6 +226,70 @@ describe('Rate Limiter', () => {
       const req = new Request('http://localhost', { method: 'POST' });
       const result = await checkPayloadSize(req);
       expect(result).toBeNull();
+    });
+  });
+
+  describe('readJsonBodySizeLimited', () => {
+    it('parses a small JSON body', async () => {
+      const req = new Request('http://localhost', {
+        method: 'POST',
+        body: JSON.stringify({ a: 1, b: 'two' }),
+        headers: { 'content-type': 'application/json' },
+      });
+      const result = await readJsonBodySizeLimited<{ a: number; b: string }>(req);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual({ a: 1, b: 'two' });
+      }
+    });
+
+    it('rejects oversized chunked payload (no content-length) with 413', async () => {
+      const req = new Request('http://localhost', {
+        method: 'POST',
+        body: 'x'.repeat(MAX_BODY_BYTES + 10),
+      });
+      const result = await readJsonBodySizeLimited(req);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.status).toBe(413);
+      }
+    });
+
+    it('rejects oversized payload declared only via content-length with 413', async () => {
+      const req = new Request('http://localhost', {
+        method: 'POST',
+        body: '', // content-length is what matters here
+        headers: { 'content-length': String(MAX_BODY_BYTES + 1) },
+      });
+      const result = await readJsonBodySizeLimited(req);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.status).toBe(413);
+      }
+    });
+
+    it('accepts a body exactly at the limit', async () => {
+      const req = new Request('http://localhost', {
+        method: 'POST',
+        body: JSON.stringify({ payload: 'y'.repeat(MAX_BODY_BYTES - 100) }),
+      });
+      const result = await readJsonBodySizeLimited(req);
+      expect(result.ok).toBe(true);
+    });
+
+    it('returns 400 for malformed JSON', async () => {
+      const req = new Request('http://localhost', { method: 'POST', body: 'not json' });
+      const result = await readJsonBodySizeLimited(req);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.status).toBe(400);
+      }
+    });
+
+    it('handles an empty body as an empty object', async () => {
+      const req = new Request('http://localhost', { method: 'POST' });
+      const result = await readJsonBodySizeLimited(req);
+      expect(result.ok).toBe(true);
     });
   });
 

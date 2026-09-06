@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Heart, ShieldCheck, Sparkles, AtSign, Camera, Play, MessageCircle } from 'lucide-react';
 import BuyMeCoffee from '@/components/ui/BuyMeCoffee';
 
@@ -116,11 +117,12 @@ export default function Footer() {
   target="_blank"
   rel="noopener noreferrer"
 >
-  <img
+  <Image
     src="https://maidensail.com/badge/seven-appreciation.svg"
     alt="Featured on MaidenSail"
     width={180}
     height={44}
+    unoptimized
     className="h-11 w-auto"
   />
 </a>

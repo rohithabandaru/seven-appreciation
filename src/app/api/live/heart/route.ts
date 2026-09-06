@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { likeSchema } from '@/lib/validations';
-import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse, readJsonBodySizeLimited } from '@/lib/rate-limit';
 import {
   toggleMessageHeart,
   channelMessageCount,
@@ -22,7 +22,9 @@ export async function POST(request: Request) {
     const rl = await checkRateLimit('liveHeart:' + session.user.id, RATE_LIMIT_POLICIES.liveHeart);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
-    const body = await request.json();
+    const bodyResult = await readJsonBodySizeLimited<Record<string, unknown>>(request);
+    if (!bodyResult.ok) return bodyResult.error;
+    const body = bodyResult.data as Record<string, unknown>;
     const result = likeSchema.safeParse(body);
 
     if (!result.success) {

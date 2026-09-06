@@ -9,12 +9,11 @@ import { notFound } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { MEMBERS_DATA } from '@/lib/data/membersData';
-import { AppreciationMessage, MemberPhoto, Post, Letter, MemberSlug } from '@/types';
+import { AppreciationMessage, MemberPhoto, Post, Letter } from '@/types';
 import Toast from '@/components/ui/Toast';
 import ReportModal from '@/components/ui/ReportModal';
 import { checkContentModeration } from '@/lib/moderation';
 import { uploadFile, validateFileClient } from '@/lib/upload/client';
-import { getStoredAppreciations, saveAppreciations, getStoredPosts } from '@/lib/storage';
 import { 
   Heart, 
   Sparkles, 
@@ -100,36 +99,24 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
   const [reportTarget, setReportTarget] = useState<{ id: string; snippet: string } | null>(null);
 
   useEffect(() => {
-    // 1. Load appreciations from real cloud database (with local fallback)
+    // 1. Load appreciations from the real database (no local fallback)
     fetch(`/api/appreciations?memberId=${member.slug}&limit=30`)
       .then(res => res.json())
       .then(json => {
         const arr = Array.isArray(json) ? json : json?.data;
-        if (Array.isArray(arr) && arr.length > 0) {
-          setAppreciations(arr.map(m => ({
-            ...m,
-            likedBy: []
-          })));
-        } else {
-          const allMessages = getStoredAppreciations();
-          setAppreciations(allMessages.filter((m) => m.memberId === member.slug));
-        }
+        setAppreciations((Array.isArray(arr) ? arr : []).map(m => ({
+          ...m,
+          likedBy: []
+        })));
       })
-      .catch(() => {
-        const allMessages = getStoredAppreciations();
-        setAppreciations(allMessages.filter((m) => m.memberId === member.slug));
-      });
+      .catch(() => setAppreciations([]));
 
     // 2. Load member photos from real cloud database (merged with default photos)
     fetch(`/api/photos?memberSlug=${member.slug}&limit=30`)
       .then(res => res.json())
       .then(json => {
         const data = Array.isArray(json) ? json : json?.data;
-        if (Array.isArray(data)) {
-          setPhotos([...data, ...(member.photos || [])]);
-        } else {
-          setPhotos(member.photos || []);
-        }
+        setPhotos([...(Array.isArray(data) ? data : []), ...(member.photos || [])]);
       })
       .catch(() => {
         setPhotos(member.photos || []);
@@ -140,9 +127,7 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
       .then(res => res.json())
       .then(json => {
         const arr = Array.isArray(json) ? json : json?.data;
-        if (Array.isArray(arr)) {
-          setLetters(arr);
-        }
+        setLetters(Array.isArray(arr) ? arr : []);
       })
       .catch(console.error);
 
@@ -151,17 +136,9 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
       .then(res => res.json())
       .then(json => {
         const data = Array.isArray(json) ? json : json?.data;
-        if (Array.isArray(data) && data.length > 0) {
-          setPosts(data);
-        } else {
-          const allPosts = getStoredPosts();
-          setPosts(allPosts.filter((p) => p.memberId === member.slug));
-        }
+        setPosts(Array.isArray(data) ? data : []);
       })
-      .catch(() => {
-        const allPosts = getStoredPosts();
-        setPosts(allPosts.filter((p) => p.memberId === member.slug));
-      });
+      .catch(() => setPosts([]));
   }, [member.slug, member.photos]);
 
   const [isUploading, setIsUploading] = useState(false);
@@ -267,24 +244,12 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
         throw new Error('Failed to save to cloud');
       }
     } catch {
-      // Fallback local save
-      const created: AppreciationMessage = {
-        id: `msg-${Date.now()}`,
-        memberId: member.slug as MemberSlug,
-        memberName: member.displayName,
-        userId: currentUserId || 'anonymous',
-        userName: userName.trim() || 'Kind Supporter',
-        userAvatar: null,
-        content: newMessage.trim(),
-        status: 'approved',
-        likesCount: 1,
-        likedBy: currentUserId ? [currentUserId] : [],
-        createdAt: new Date().toISOString()
-      };
-      const all = getStoredAppreciations();
-      const updated = [created, ...all];
-      saveAppreciations(updated);
-      setAppreciations(updated.filter((m) => m.memberId === member.slug));
+      setToast({
+        type: 'error',
+        title: 'Could not share',
+        message: 'Appreciation could not be saved. Please sign in and try again.'
+      });
+      return;
     }
 
     setNewMessage('');

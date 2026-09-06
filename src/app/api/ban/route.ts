@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions, isDbAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse, readJsonBodySizeLimited } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/ip';
 import { logSecurityEvent } from '@/lib/security-logger';
 
@@ -38,7 +38,9 @@ export async function POST(req: NextRequest) {
     const rl = await checkRateLimit('admin:' + session.user.id, RATE_LIMIT_POLICIES.admin);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
-    const reqBody = await req.json();
+    const bodyResult = await readJsonBodySizeLimited<{ ip: string; reason?: string }>(req);
+    if (!bodyResult.ok) return bodyResult.error;
+    const reqBody = bodyResult.data as { ip: string; reason?: string };
     const { ip, reason } = reqBody;
 
     if (!ip) {
@@ -74,7 +76,9 @@ export async function DELETE(req: NextRequest) {
     const rl = await checkRateLimit('admin:' + session.user.id, RATE_LIMIT_POLICIES.admin);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
-    const reqBody = await req.json();
+    const bodyResult = await readJsonBodySizeLimited<{ ip: string }>(req);
+    if (!bodyResult.ok) return bodyResult.error;
+    const reqBody = bodyResult.data as { ip: string };
     const { ip } = reqBody;
 
     if (!ip) {

@@ -9,8 +9,18 @@ import { logSecurityEvent } from "@/lib/security-logger";
 
 import bcrypt from "bcryptjs";
 
+const isProduction = process.env.NODE_ENV === "production";
+
+// Never fall back to a hardcoded secret in production: sessions would become
+// invalid (or forgeable) if the env var is ever missing or rotated.
+if (isProduction && !process.env.NEXTAUTH_SECRET) {
+  throw new Error(
+    "NEXTAUTH_SECRET is not defined. Set it in your environment before deploying."
+  );
+}
+
 export const authOptions: NextAuthOptions = {
-  secret: process.env.NEXTAUTH_SECRET || "w1khxVWwDxKqcLWqDD2hnVj8w3pA/ejZ7PvEY6qnaWk=",
+  secret: process.env.NEXTAUTH_SECRET || "dev-only-insecure-secret-do-not-use-in-production",
   adapter: PrismaAdapter(prisma) as Adapter,
   providers: [
     CredentialsProvider({
@@ -56,6 +66,12 @@ export const authOptions: NextAuthOptions = {
         if (!user) {
           logSecurityEvent({ event: 'failed_login', ip, email, detail: 'Account not found', endpoint: '/api/auth/login' });
           throw new Error("Account not found. Please sign up first.");
+        }
+
+        const bannedUser = await prisma.bannedUser.findUnique({ where: { userId: user.id } });
+        if (bannedUser) {
+          logSecurityEvent({ event: 'user_banned_login_blocked', ip, email, endpoint: '/api/auth/login' });
+          throw new Error("Your account has been suspended.");
         }
 
         if (!credentials.password) {

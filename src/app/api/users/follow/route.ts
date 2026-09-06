@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { targetIdSchema } from "@/lib/validations";
-import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse, checkPayloadSize } from '@/lib/rate-limit';
+import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse, checkPayloadSize, readJsonBodySizeLimited } from '@/lib/rate-limit';
 
 export async function POST(req: Request) {
   try {
@@ -18,7 +18,9 @@ export async function POST(req: Request) {
     const rl = await checkRateLimit('follow:' + session.user.id, RATE_LIMIT_POLICIES.follow);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
-    const body = await req.json();
+    const bodyResult = await readJsonBodySizeLimited<Record<string, unknown>>(req);
+    if (!bodyResult.ok) return bodyResult.error;
+    const body = bodyResult.data as Record<string, unknown>;
     const result = targetIdSchema.safeParse(body);
 
     if (!result.success) {

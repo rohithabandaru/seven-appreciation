@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { registerSchema } from "@/lib/validations";
-import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse, checkPayloadSize } from "@/lib/rate-limit";
+import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse, checkPayloadSize, readJsonBodySizeLimited } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/ip";
 import { logSecurityEvent } from "@/lib/security-logger";
+import { STARTER_CARD_IDS } from "@/lib/photocards";
 
 export async function POST(req: Request) {
   const ip = getClientIp(req);
@@ -19,7 +20,9 @@ export async function POST(req: Request) {
   }
 
   try {
-    const body = await req.json();
+    const bodyResult = await readJsonBodySizeLimited<Record<string, unknown>>(req);
+    if (!bodyResult.ok) return bodyResult.error;
+    const body = bodyResult.data as Record<string, unknown>;
     
     // Zod validation
     const result = registerSchema.safeParse(body);
@@ -70,7 +73,6 @@ export async function POST(req: Request) {
     });
 
     // Seed 3 starter photocards
-    const STARTER_CARD_IDS = ['pc-hs-1', 'pc-jw-1', 'pc-nk-1'];
     await prisma.unlockedPhotocard.createMany({
       data: STARTER_CARD_IDS.map((cardId) => ({
         userId: newUser.id,

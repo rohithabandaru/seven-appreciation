@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from '@/lib/prisma'
 import { appreciationSchema, likeSchema } from '@/lib/validations'
 import { Prisma } from '@prisma/client'
-import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse, checkPayloadSize } from '@/lib/rate-limit';
+import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse, checkPayloadSize, readJsonBodySizeLimited } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/ip';
 import { logSecurityEvent } from '@/lib/security-logger';
 import { checkContentModeration } from '@/lib/moderation';
@@ -54,7 +54,9 @@ export async function POST(request: Request) {
     const rl = await checkRateLimit('appreciation:' + session.user.id, RATE_LIMIT_POLICIES.appreciation);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
-    const body = await request.json()
+    const bodyResult = await readJsonBodySizeLimited<Record<string, unknown>>(request)
+    if (!bodyResult.ok) return bodyResult.error
+    const body = bodyResult.data as Record<string, unknown>
     const result = appreciationSchema.safeParse(body)
     if (!result.success) {
       return NextResponse.json({ error: "Invalid input", details: result.error.flatten() }, { status: 400 })
@@ -105,7 +107,9 @@ export async function PATCH(request: Request) {
     const rl = await checkRateLimit('like:' + session.user.id, RATE_LIMIT_POLICIES.like);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
-    const body = await request.json()
+    const bodyResult = await readJsonBodySizeLimited<Record<string, unknown>>(request)
+    if (!bodyResult.ok) return bodyResult.error
+    const body = bodyResult.data as Record<string, unknown>
     const result = likeSchema.safeParse(body)
     
     if (!result.success) {

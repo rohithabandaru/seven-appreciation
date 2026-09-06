@@ -10,15 +10,9 @@ import {
 } from '@/lib/upload';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { logSecurityEvent } from '@/lib/security-logger';
+import { getClientIp } from '@/lib/ip';
 
 const UPLOAD_RATE_LIMIT_POLICY = { windowMs: 60 * 60 * 1000, maxRequests: 60 };
-
-const DEBUG_LOG = process.env.NODE_ENV !== 'production';
-function debugLog(line: string) {
-  if (!DEBUG_LOG) return;
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  require('fs').appendFileSync('upload-debug.log', `${new Date().toISOString()} ${line}\n`);
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,14 +20,12 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    debugLog('session ok');
 
     const userId = session.user.id;
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const ip = getClientIp(request);
 
     const rl = await checkRateLimit(`upload:${userId}`, UPLOAD_RATE_LIMIT_POLICY);
     if (!rl.allowed) {
-      debugLog('REJECT 429 rate-limited');
       return rateLimitResponse(rl.retryAfterMs);
     }
 
@@ -42,20 +34,17 @@ export async function POST(request: NextRequest) {
     const purpose = (formData.get('purpose') as string) || 'photo';
 
     if (!file || typeof file === 'string' || typeof (file as Blob).arrayBuffer !== 'function') {
-      debugLog('REJECT 400 No valid file provided');
       return NextResponse.json({ error: 'No file provided.' }, { status: 400 });
     }
 
     const rawFile = file as Blob & { name?: string; type?: string };
     const fileName = (typeof rawFile.name === 'string' && rawFile.name) ? rawFile.name : 'upload.jpg';
-    debugLog(`formData parsed file=${fileName} type=${rawFile.type} size=${rawFile.size} purpose=${purpose}`);
 
     const category = getUploadCategoryFromPurpose(purpose);
 
     const buffer = Buffer.from(await rawFile.arrayBuffer());
 
     const validation = validateFileUpload({ name: fileName, type: rawFile.type, size: rawFile.size }, buffer, category);
-    debugLog(`validation=${validation.valid ? 'PASS' : `FAIL: ${validation.error}`}`);
     if (!validation.valid) {
       logSecurityEvent({
         event: 'upload_validation_failed',
@@ -169,7 +158,6 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
 
   } catch (error) {
-    debugLog(`CRASH ${error instanceof Error ? error.stack : String(error)}`);
     console.error('Upload error:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },

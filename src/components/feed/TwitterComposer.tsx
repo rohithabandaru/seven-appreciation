@@ -315,9 +315,11 @@ export default function TwitterComposer({
                       className="absolute inset-0 bg-cover bg-center blur-xl opacity-30 scale-110 pointer-events-none"
                       style={{ backgroundImage: `url(${imageUrl})` }}
                     />
-                    <img
+                    <Image
                       src={imageUrl}
                       alt="Uploaded attachment"
+                      width={720}
+                      height={405}
                       className="relative max-h-72 w-full object-contain"
                     />
                     <button

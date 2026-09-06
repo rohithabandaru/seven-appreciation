@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions, isDbAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { reportSchema } from "@/lib/validations";
-import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse, checkPayloadSize } from '@/lib/rate-limit';
+import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse, checkPayloadSize, readJsonBodySizeLimited } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/ip';
 import { logSecurityEvent } from '@/lib/security-logger';
 
@@ -56,7 +56,9 @@ export async function POST(req: NextRequest) {
     const rl = await checkRateLimit('report:' + session.user.id, RATE_LIMIT_POLICIES.report);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
-    const body = await req.json();
+    const bodyResult = await readJsonBodySizeLimited<Record<string, unknown>>(req);
+    if (!bodyResult.ok) return bodyResult.error;
+    const body = bodyResult.data as Record<string, unknown>;
     const result = reportSchema.safeParse(body);
 
     if (!result.success) {

@@ -9,11 +9,11 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 function useHydrated(): boolean {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  return mounted;
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 }
 
 export default function InstallPWAButton() {

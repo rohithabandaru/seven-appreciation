@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from '@/lib/prisma';
 import { milestoneSchema, likeSchema } from '@/lib/validations';
 import { Prisma } from '@prisma/client';
-import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse, checkPayloadSize } from '@/lib/rate-limit';
+import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse, checkPayloadSize, readJsonBodySizeLimited } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/ip';
 import { logSecurityEvent } from '@/lib/security-logger';
 import { checkContentModeration } from '@/lib/moderation';
@@ -47,7 +47,9 @@ export async function POST(req: NextRequest) {
     const rl = await checkRateLimit('milestone:' + session.user.id, RATE_LIMIT_POLICIES.milestone);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
-    const body = await req.json();
+    const bodyResult = await readJsonBodySizeLimited<Record<string, unknown>>(req);
+    if (!bodyResult.ok) return bodyResult.error;
+    const body = bodyResult.data as Record<string, unknown>;
     const result = milestoneSchema.safeParse(body);
 
     if (!result.success) {
@@ -99,7 +101,9 @@ export async function PATCH(req: NextRequest) {
     const rl = await checkRateLimit('like:' + session.user.id, RATE_LIMIT_POLICIES.like);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
-    const body = await req.json();
+    const bodyResult = await readJsonBodySizeLimited<Record<string, unknown>>(req);
+    if (!bodyResult.ok) return bodyResult.error;
+    const body = bodyResult.data as Record<string, unknown>;
     const result = likeSchema.safeParse(body);
 
     if (!result.success) {

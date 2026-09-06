@@ -21,7 +21,7 @@ export function useFeedPage(initialCategory: string = 'all') {
   const [toast, setToast] = useState<{ type: 'success' | 'warning' | 'error'; title: string; message: string } | null>(null);
   const [reportTarget, setReportTarget] = useState<{ id: string; snippet: string } | null>(null);
 
-  const getKey = (pageIndex: number, previousPageData: any) => {
+  const getKey = (pageIndex: number, previousPageData: { data?: Post[] } | null) => {
     // Reached the end
     if (previousPageData && (!previousPageData.data || previousPageData.data.length === 0)) return null;
     
@@ -33,23 +33,23 @@ export function useFeedPage(initialCategory: string = 'all') {
     return `/api/posts?${params.toString()}`;
   };
 
-  const { data, error, size, setSize, mutate, isValidating } = useSWRInfinite(getKey, fetcher, {
+  const { data, error, size, setSize, mutate } = useSWRInfinite(getKey, fetcher, {
     revalidateFirstPage: false,
   });
 
-  const posts: Post[] = data ? [].concat(...data.map(page => page.data || [])) : [];
+  const posts: Post[] = data ? data.flatMap((page) => page.data || []) : [];
   
   const isLoading = !data && !error;
   const isLoadingMore = isLoading || (size > 0 && data && typeof data[size - 1] === "undefined");
   const hasMore = data ? (data[data.length - 1]?.data?.length >= 10) : true;
 
   const setPosts = useCallback((updater: React.SetStateAction<Post[]>) => {
-    mutate((currentPages: any) => {
+    mutate((currentPages: { data: Post[] }[] | undefined) => {
       if (!currentPages) return currentPages;
-      const currentPosts = [].concat(...currentPages.map((p: any) => p.data || []));
+      const currentPosts = currentPages.flatMap((p) => p.data || []);
       const newPosts = typeof updater === 'function' ? updater(currentPosts) : updater;
       
-      const newPages = [];
+      const newPages: { data: Post[] }[] = [];
       const chunkSize = 10;
       for (let i = 0; i < newPosts.length; i += chunkSize) {
         newPages.push({ data: newPosts.slice(i, i + chunkSize) });

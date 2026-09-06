@@ -1,11 +1,15 @@
 /**
  * Centralized IP extraction from request headers.
  *
- * Deployment: single-server (next start), no trusted reverse proxy by default.
- * If deployed behind a trusted CDN/proxy that sets X-Real-IP, prioritize that.
+ * Deployment assumptions:
+ * - By default (no TRUSTED_PROXY) the app sits behind a reverse proxy / CDN
+ *   (Vercel edge, etc.) that APPENDS the connecting peer to X-Forwarded-For.
+ *   A client can prepend arbitrary forged entries, so the RIGHTMOST entry is
+ *   the only one we can trust. Example: "1.2.3.4 (forged), 198.51.100.9 (real)".
+ * - If deployed behind a trusted reverse proxy that sets X-Real-IP from the
+ *   upstream TLS peer, set TRUSTED_PROXY=true to prefer that header.
  *
- * For production behind a reverse proxy, set TRUSTED_PROXY=true in .env
- * to prefer X-Real-IP over X-Forwarded-For (which can be spoofed).
+ * For production behind a reverse proxy, set TRUSTED_PROXY=true in .env.
  */
 
 function getHeader(request: Request, name: string): string | null {
@@ -22,21 +26,34 @@ function getHeader(request: Request, name: string): string | null {
   return value ?? null;
 }
 
+/** Returns the first non-empty entry, or 'unknown'. */
+function firstNonEmpty(entries: string[]): string {
+  for (const entry of entries) {
+    if (entry) return entry.trim();
+  }
+  return 'unknown';
+}
+
 export function getClientIp(request: Request): string {
   const trustedProxy = process.env.TRUSTED_PROXY === 'true';
 
   if (trustedProxy) {
     const realIp = getHeader(request, 'x-real-ip');
-    if (realIp) return realIp.split(',')[0].trim();
+    if (realIp) return firstNonEmpty(realIp.split(','));
   }
 
   const forwarded = getHeader(request, 'x-forwarded-for');
   if (forwarded) {
-    return forwarded.split(',')[0].trim();
+    const entries = forwarded.split(',').map((s) => s.trim()).filter(Boolean);
+    if (entries.length > 0) {
+      // Rightmost entry is appended by the nearest trusted network hop and
+      // reflects the actual peer. Leading entries are client-controllable.
+      return entries[entries.length - 1];
+    }
   }
 
   const realIp = getHeader(request, 'x-real-ip');
-  if (realIp) return realIp.split(',')[0].trim();
+  if (realIp) return firstNonEmpty(realIp.split(','));
 
   return 'unknown';
 }

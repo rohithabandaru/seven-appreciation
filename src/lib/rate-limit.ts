@@ -154,6 +154,9 @@ export const RATE_LIMIT_POLICIES = {
 
   /** Analytics tracking: 60 per 15 minutes per IP */
   analyticsTrack: { windowMs: 15 * 60 * 1000, maxRequests: 60 },
+
+  /** Photocard pack opens: 10 per 5 minutes per user (daily cap is separate) */
+  pack: { windowMs: 5 * 60 * 1000, maxRequests: 10 },
 } as const;
 
 // ── Helper: apply rate limit and return 429 response ─────────────────────────
@@ -171,15 +174,86 @@ export function rateLimitResponse(retryAfterMs: number): Response {
 
 // ── Payload size check ───────────────────────────────────────────────────────
 
-const MAX_BODY_BYTES = 512 * 1024; // 512 KB
+export const MAX_BODY_BYTES = 512 * 1024; // 512 KB
+
+function tooLargeResponse(): Response {
+  return Response.json(
+    { error: 'Request body too large.' },
+    { status: 413 }
+  );
+}
 
 export async function checkPayloadSize(request: Request): Promise<Response | null> {
   const contentLength = request.headers.get('content-length');
   if (contentLength && parseInt(contentLength, 10) > MAX_BODY_BYTES) {
-    return Response.json(
-      { error: 'Request body too large.' },
-      { status: 413 }
-    );
+    return tooLargeResponse();
   }
   return null;
+}
+
+export type BodyReadResult = { ok: true; text: string } | { ok: false; error: Response };
+
+/**
+ * Read a request body with a hard byte cap, streaming from the wire so a
+ * chunked-encoded request cannot smuggle more than MAX_BODY_BYTES past a
+ * Content-Length-based check. Routes must use this instead of `request.json()`.
+ */
+export async function readBodySizeLimited(request: Request): Promise<BodyReadResult> {
+  const contentLength = request.headers.get('content-length');
+  if (contentLength) {
+    const declared = Number.parseInt(contentLength, 10);
+    if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) {
+      return { ok: false, error: tooLargeResponse() };
+    }
+  }
+
+  const stream = request.body;
+  if (!stream) {
+    return { ok: true, text: '' };
+  }
+
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      total += value.byteLength;
+      if (total > MAX_BODY_BYTES) {
+        await reader.cancel('too large');
+        return { ok: false, error: tooLargeResponse() };
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return { ok: true, text: new TextDecoder().decode(merged) };
+}
+
+export type JsonBodyResult<T> = { ok: true; data: T } | { ok: false; error: Response };
+
+/** Parse a size-limited JSON request body. Returns a 400/413 Response on failure. */
+export async function readJsonBodySizeLimited<T = unknown>(
+  request: Request
+): Promise<JsonBodyResult<T>> {
+  const read = await readBodySizeLimited(request);
+  if (!read.ok) return read;
+
+  let data: unknown;
+  try {
+    data = read.text ? JSON.parse(read.text) : {};
+  } catch {
+    return { ok: false, error: Response.json({ error: 'Invalid JSON body.' }, { status: 400 }) };
+  }
+  return { ok: true, data: data as T };
 }

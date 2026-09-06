@@ -126,6 +126,15 @@ jest.mock('@/lib/rate-limit', () => ({
   RATE_LIMIT_POLICIES: new Proxy({}, { get: () => ({ windowMs: 60000, maxRequests: 1000 }) }),
   rateLimitResponse: jest.fn((retryAfterMs: number) => new Response('Rate limited', { status: 429, headers: { 'Retry-After': String(Math.ceil(retryAfterMs / 1000)) } })),
   checkPayloadSize: jest.fn(() => Promise.resolve(null)),
+  readJsonBodySizeLimited: jest.fn(async (req: Request) => {
+    let data: unknown = {};
+    try {
+      data = await req.json();
+    } catch {
+      // no body — treat as empty
+    }
+    return { ok: true, data };
+  }),
 }));
 
 // ── Mock upload processing ───────────────────────────────────────────────────

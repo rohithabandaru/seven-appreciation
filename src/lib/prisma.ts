@@ -16,7 +16,7 @@ export const prisma =
     const connStr = cleanConnectionString(process.env.DATABASE_URL);
     const pool = globalForPrisma.pool ?? new pg.Pool({
       connectionString: connStr,
-      ssl: { rejectUnauthorized: false },
+      ssl: { rejectUnauthorized: true },
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,

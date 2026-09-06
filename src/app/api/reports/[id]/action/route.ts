@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions, isDbAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse, readJsonBodySizeLimited } from '@/lib/rate-limit';
 import { logSecurityEvent } from '@/lib/security-logger';
 
 const VALID_ACTIONS = ['dismiss', 'hide', 'remove', 'warn_user', 'ban_user'] as const;
@@ -21,7 +21,9 @@ export async function POST(
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     const { id: reportId } = await params;
-    const body = await request.json();
+    const bodyResult = await readJsonBodySizeLimited<{ action: (typeof VALID_ACTIONS)[number]; detail?: string | null }>(request);
+    if (!bodyResult.ok) return bodyResult.error;
+    const body = bodyResult.data as { action: (typeof VALID_ACTIONS)[number]; detail?: string | null };
     const { action, detail } = body;
 
     if (!action || !VALID_ACTIONS.includes(action)) {
@@ -58,42 +60,83 @@ export async function POST(
     // Actually update the underlying content visibility for hide/remove/ban_user actions
     if (action === 'hide' || action === 'remove' || action === 'ban_user') {
       const newStatus = action === 'hide' ? 'hidden' : 'removed';
+      let targetUserId: string | null = null;
       try {
         switch (report.contentType) {
           case 'post':
-          case 'story':
-            await prisma.post.update({
+          case 'story': {
+            const post = await prisma.post.findUnique({
               where: { id: report.contentId },
-              data: { status: newStatus },
-            }).catch(() => {});
+              select: { userId: true },
+            }).catch(() => null);
+            targetUserId = post?.userId ?? null;
+            if (post) {
+              await prisma.post.update({
+                where: { id: report.contentId },
+                data: { status: newStatus },
+              }).catch(() => {});
+            }
             break;
-          case 'appreciation':
+          }
+          case 'appreciation': {
+            const appreciation = await prisma.appreciationMessage.findUnique({
+              where: { id: report.contentId },
+              select: { userId: true },
+            }).catch(() => null);
+            targetUserId = appreciation?.userId ?? null;
             await prisma.appreciationMessage.update({
               where: { id: report.contentId },
               data: { status: newStatus },
             }).catch(() => {});
             break;
-          case 'milestone':
+          }
+          case 'milestone': {
+            const milestone = await prisma.communityMilestone.findUnique({
+              where: { id: report.contentId },
+              select: { userId: true },
+            }).catch(() => null);
+            targetUserId = milestone?.userId ?? null;
             await prisma.communityMilestone.update({
               where: { id: report.contentId },
               data: { status: newStatus },
             }).catch(() => {});
             break;
-          case 'comment':
-            await prisma.comment.delete({
+          }
+          case 'comment': {
+            const comment = await prisma.comment.findUnique({
               where: { id: report.contentId },
-            }).catch(() => {});
+              select: { userId: true },
+            }).catch(() => null);
+            targetUserId = comment?.userId ?? null;
+            if (comment) {
+              await prisma.comment.delete({
+                where: { id: report.contentId },
+              }).catch(() => {});
+            }
             break;
-          case 'letter':
+          }
+          case 'letter': {
+            const letter = await prisma.letter.findUnique({
+              where: { id: report.contentId },
+              select: { userId: true },
+            }).catch(() => null);
+            targetUserId = letter?.userId ?? null;
             await prisma.letter.delete({
               where: { id: report.contentId },
             }).catch(() => {});
             break;
-          case 'photo':
+          }
+          case 'photo': {
+            const photo = await prisma.memberPhoto.findUnique({
+              where: { id: report.contentId },
+              select: { uploadedBy: true },
+            }).catch(() => null);
+            targetUserId = photo?.uploadedBy ?? null;
             await prisma.memberPhoto.delete({
               where: { id: report.contentId },
             }).catch(() => {});
             break;
+          }
           default:
             logSecurityEvent({
               event: 'moderation_unknown_type',
@@ -103,12 +146,20 @@ export async function POST(
             });
         }
 
-        if (action === 'ban_user' && report.reporterIp) {
-          await prisma.bannedIP.upsert({
-            where: { ip: report.reporterIp },
+        // Ban the AUTHOR of the reported content, never the reporter.
+        // Approval = account-level ban row enforced at login + via proxy.ts.
+        if (action === 'ban_user' && targetUserId) {
+          await prisma.bannedUser.upsert({
+            where: { userId: targetUserId },
             update: { reason: `Banned via moderation action on report ${reportId}`, bannedBy: session.user.id },
-            create: { ip: report.reporterIp, reason: `Banned via moderation action on report ${reportId}`, bannedBy: session.user.id },
+            create: { userId: targetUserId, reason: `Banned via moderation action on report ${reportId}`, bannedBy: session.user.id },
           }).catch(() => {});
+          logSecurityEvent({
+            event: 'user_banned',
+            userId: targetUserId,
+            detail: `Banned via moderation action on report ${reportId}`,
+            endpoint: '/api/reports/[id]/action',
+          });
         }
       } catch (contentError) {
         logSecurityEvent({

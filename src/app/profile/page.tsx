@@ -1,13 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import UserAvatar from '@/components/ui/UserAvatar';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Toast from '@/components/ui/Toast';
-import { getStoredProfile, saveProfile, CURRENT_USER_PROFILE } from '@/lib/storage';
-import { Profile } from '@/types';
 import { uploadFile, validateFileClient } from '@/lib/upload/client';
 import { MEMBERS_DATA } from '@/lib/data/membersData';
 import { 
@@ -25,43 +23,14 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 
 export default function ProfilePage() {
-  const { data: session, update } = useSession();
-  const [profile, setProfile] = useState<Profile>(CURRENT_USER_PROFILE);
+  const { data: session, status, update } = useSession();
+  const [displayName, setDisplayName] = useState('');
+  const [bio, setBio] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [joinedDate, setJoinedDate] = useState('');
+  const [unlockedCount, setUnlockedCount] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
-  const [displayName, setDisplayName] = useState(CURRENT_USER_PROFILE.displayName);
-  const [bio, setBio] = useState(CURRENT_USER_PROFILE.bio);
-  const [avatarUrl, setAvatarUrl] = useState(CURRENT_USER_PROFILE.avatarUrl);
-
-  const [lastSession, setLastSession] = React.useState(session);
-
-  if (lastSession !== session) {
-    setLastSession(session);
-    const stored = typeof window !== 'undefined' ? getStoredProfile() : CURRENT_USER_PROFILE;
-    if (session?.user) {
-      const activeName = session.user.name || stored.displayName || 'Kind Supporter';
-      const activeImage = session.user.image || stored.avatarUrl || '';
-      const activeBio = stored.bio || 'Spreading kindness and love for all seven members!';
-      const activeRole = session.user.role || stored.role || 'fan';
-      const activeUsername = session.user.email?.split('@')[0] || stored.username || 'supporter';
-
-      setDisplayName(activeName);
-      setAvatarUrl(activeImage);
-      setBio(activeBio);
-      setProfile({
-        ...stored,
-        displayName: activeName,
-        avatarUrl: activeImage,
-        bio: activeBio,
-        username: activeUsername,
-        role: activeRole
-      });
-    } else {
-      setDisplayName(stored.displayName);
-      setAvatarUrl(stored.avatarUrl);
-      setBio(stored.bio);
-      setProfile(stored);
-    }
-  }
+  const [loaded, setLoaded] = useState(false);
 
   // Avatar Modal State
   const [showAvatarModal, setShowAvatarModal] = useState(false);
@@ -72,6 +41,70 @@ export default function ProfilePage() {
   const [toast, setToast] = useState<{ type: 'success' | 'warning' | 'error'; title: string; message: string } | null>(null);
 
   const [isUploading, setIsUploading] = useState(false);
+
+  function formatJoined(iso?: string): string {
+    if (!iso) return 'Recently joined';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return 'Recently joined';
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long' });
+  }
+
+  useEffect(() => {
+    if (status !== 'authenticated' || loaded) return;
+
+    fetch('/api/users/profile')
+      .then((res) => res.json())
+      .then((data: {
+        user?: { name?: string | null; image?: string | null; bio?: string | null; createdAt?: string };
+        stats?: { unlockedCount?: number };
+      }) => {
+        const u = data.user;
+        const name = u?.name || session?.user?.name || 'Supporter';
+        setDisplayName(name);
+        setBio(u?.bio || '');
+        setAvatarUrl(u?.image || '');
+        setJoinedDate(formatJoined(u?.createdAt));
+        setUnlockedCount(data.stats?.unlockedCount ?? 0);
+        setLoaded(true);
+      })
+      .catch(() => {
+        setDisplayName(session?.user?.name || 'Supporter');
+        setLoaded(true);
+      });
+  }, [status, session?.user?.name, loaded]);
+
+  const username = (session?.user?.email?.split('@')[0] || 'supporter').toLowerCase();
+  const role = (session?.user?.role || 'user').toLowerCase();
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex flex-col font-sans">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center py-24 text-sm font-bold text-zinc-400">
+          <Sparkles className="h-5 w-5 animate-spin mr-2 text-rose-500" /> Loading profile...
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (status === 'unauthenticated') {
+    return (
+      <div className="min-h-screen flex flex-col font-sans">
+        <Navbar />
+        <main className="flex-1 flex flex-col items-center justify-center py-24 px-4 text-center space-y-4">
+          <h1 className="text-2xl font-extrabold text-zinc-900">Sign In Required</h1>
+          <p className="text-sm text-zinc-600 max-w-md">
+            Please sign in to view and edit your profile.
+          </p>
+          <Link href="/login" className="rounded-2xl bg-rose-500 px-6 py-3 text-xs font-extrabold text-white shadow-md hover:bg-rose-600 transition-colors">
+            Sign In / Register
+          </Link>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -117,29 +150,18 @@ export default function ProfilePage() {
   // Save Profile Changes
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newName = displayName.trim() || 'Kind Supporter';
+    const newName = displayName.trim() || 'Supporter';
     const newBio = bio.trim();
 
     try {
-      if (session?.user) {
-        const res = await fetch('/api/users/profile', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: newName, bio: newBio, image: avatarUrl })
-        });
-        if (!res.ok) throw new Error('Failed to update profile via API');
-        await update({ name: newName, image: avatarUrl });
-      }
+      const res = await fetch('/api/users/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName, bio: newBio, image: avatarUrl })
+      });
+      if (!res.ok) throw new Error('Failed to update profile via API');
+      await update({ name: newName, image: avatarUrl });
 
-      const updated = {
-        ...profile,
-        displayName: newName,
-        bio: newBio,
-        avatarUrl: avatarUrl
-      };
-
-      setProfile(updated);
-      saveProfile(updated);
       setIsEditing(false);
       setShowAvatarModal(false);
 
@@ -159,23 +181,15 @@ export default function ProfilePage() {
 
   const handleApplyAvatar = async (url: string) => {
     try {
-      if (session?.user) {
-        const res = await fetch('/api/users/profile', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: url })
-        });
-        if (!res.ok) throw new Error('Failed to update avatar via API');
-        await update({ image: url });
-      }
+      const res = await fetch('/api/users/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: url })
+      });
+      if (!res.ok) throw new Error('Failed to update avatar via API');
+      await update({ image: url });
 
       setAvatarUrl(url);
-      const updated = {
-        ...profile,
-        avatarUrl: url
-      };
-      setProfile(updated);
-      saveProfile(updated);
       setShowAvatarModal(false);
 
       setToast({
@@ -376,7 +390,7 @@ export default function ProfilePage() {
                     type="url"
                     value={customUrlInput}
                     onChange={(e) => setCustomUrlInput(e.target.value)}
-                    placeholder="https://images.unsplash.com/... or direct image link"
+                    placeholder="https://... or direct image link"
                     className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 p-3 text-xs focus:border-rose-500 focus:bg-white focus:outline-hidden"
                   />
                 </div>
@@ -415,7 +429,7 @@ export default function ProfilePage() {
             {/* AVATAR WITH INTERACTIVE CAMERA BADGE */}
             <div className="relative group cursor-pointer" onClick={() => setShowAvatarModal(true)}>
               <div className="h-28 w-28 sm:h-32 sm:w-32 rounded-full overflow-hidden shadow-xl border-4 border-white bg-zinc-100 ring-4 ring-rose-100 transition-transform group-hover:scale-102">
-                <UserAvatar name={profile.displayName} image={profile.avatarUrl} size={128} />
+                <UserAvatar name={displayName} image={avatarUrl} size={128} />
               </div>
 
               {/* Hover Camera Overlay Button */}
@@ -424,7 +438,7 @@ export default function ProfilePage() {
                 <span>Change Photo</span>
               </div>
 
-              {/* Verified Star Badge */}
+              {/* Decor Star Badge */}
               <div className="absolute bottom-1 right-1 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 p-1.5 text-white shadow-md border-2 border-white">
                 <Sparkles className="h-3.5 w-3.5" />
               </div>
@@ -433,21 +447,23 @@ export default function ProfilePage() {
             {/* Profile Info Details */}
             <div className="flex-1 text-center sm:text-left space-y-2">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900">{profile.displayName}</h1>
-                <span className="text-xs text-zinc-400 font-mono">@{profile.username}</span>
-                <span className="rounded-full bg-purple-100 border border-purple-200 px-3 py-0.5 text-[11px] font-bold text-purple-700">
-                  {profile.role.toUpperCase()}
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900">{displayName}</h1>
+                <span className="text-xs text-zinc-400 font-mono">@{username}</span>
+                <span className={`rounded-full px-3 py-0.5 text-[11px] font-bold border ${
+                  role === 'admin' ? 'bg-purple-100 border-purple-200 text-purple-700' : 'bg-zinc-100 border-zinc-200 text-zinc-600'
+                }`}>
+                  {role.toUpperCase()}
                 </span>
               </div>
 
-              <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed max-w-xl">{profile.bio}</p>
+              <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed max-w-xl">
+                {bio || 'Spreading kindness and genuine appreciation for all seven members.'}
+              </p>
 
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs font-semibold text-zinc-500 pt-1">
-                <span>Joined {profile.joinedDate}</span>
+                <span>Joined {joinedDate}</span>
                 <span>•</span>
-                <span className="text-rose-600 font-bold">16 Cards Collected</span>
-                <span>•</span>
-                <span>Safe Community Member</span>
+                <span className="text-rose-600 font-bold">{unlockedCount} Cards Collected</span>
               </div>
             </div>
 

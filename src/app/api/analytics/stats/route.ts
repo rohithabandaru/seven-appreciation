@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { authOptions, isDbAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 const dayKey = (d: Date) => d.toISOString().slice(0, 10);
@@ -8,7 +8,7 @@ const dayKey = (d: Date) => d.toISOString().slice(0, 10);
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user || session.user.role !== 'admin') {
+    if (!session?.user?.id || session.user.role !== 'admin' || !(await isDbAdmin(session.user.id))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

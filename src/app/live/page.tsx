@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import UserAvatar from '@/components/ui/UserAvatar';
@@ -48,7 +48,7 @@ const QUICK_REACTIONS = [
 const CHANNELS = ['all', ...MEMBERS_DATA.map((m) => m.slug)];
 
 export default function LiveRoomPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [selectedChannel, setSelectedChannel] = useState<string>('all');
   const [messagesByChannel, setMessagesByChannel] =
     useState<Record<string, LiveMessage[]>>(() =>
@@ -68,7 +68,10 @@ export default function LiveRoomPage() {
   const eventSourceRef = useRef<EventSource | null>(null);
   const loadedChannelsRef = useRef<Set<string>>(new Set());
 
-  const currentMessages = messagesByChannel[selectedChannel] ?? [];
+  const currentMessages = useMemo(
+    () => messagesByChannel[selectedChannel] ?? [],
+    [messagesByChannel, selectedChannel]
+  );
 
   // Handle incoming live stream events for the current channel.
   const handleStreamEvent = useCallback((data: LiveStreamEventData) => {
@@ -122,7 +125,10 @@ export default function LiveRoomPage() {
 
   // Open/reconnect SSE stream whenever the selected channel changes.
   useEffect(() => {
-    loadChannel(selectedChannel);
+    // Defer so the loading flag isn't set synchronously during the effect body.
+    const loadTimer = setTimeout(() => {
+      loadChannel(selectedChannel);
+    }, 0);
 
     const source = new EventSource(`/api/live/stream?channel=${encodeURIComponent(selectedChannel)}`);
     eventSourceRef.current = source;
@@ -140,6 +146,7 @@ export default function LiveRoomPage() {
     };
 
     return () => {
+      clearTimeout(loadTimer);
       source.close();
       eventSourceRef.current = null;
     };

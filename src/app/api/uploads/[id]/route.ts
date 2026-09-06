@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { authOptions, isDbAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { storageDelete } from '@/lib/upload';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { logSecurityEvent } from '@/lib/security-logger';
+import { getClientIp } from '@/lib/ip';
 
 const DELETE_RATE_LIMIT = { windowMs: 60 * 1000, maxRequests: 10 };
 
@@ -19,9 +20,9 @@ export async function DELETE(
     }
 
     const userId = session.user.id;
-    const userRole = (session.user as { role?: string }).role;
+    const isAdmin = (session.user as { role?: string }).role === 'admin' && (await isDbAdmin(userId));
     const { id } = await params;
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const ip = getClientIp(request);
 
     const rl = await checkRateLimit(`delete-upload:${userId}`, DELETE_RATE_LIMIT);
     if (!rl.allowed) {
@@ -36,7 +37,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'File not found.' }, { status: 404 });
     }
 
-    if (file.ownerId !== userId && userRole !== 'admin') {
+    if (file.ownerId !== userId && !isAdmin) {
       logSecurityEvent({
         event: 'upload_unauthorized_delete',
         ip,

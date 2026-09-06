@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions, isDbAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { readJsonBodySizeLimited } from "@/lib/rate-limit";
 import { logSecurityEvent } from '@/lib/security-logger';
 import { getClientIp } from '@/lib/ip';
 
@@ -70,8 +71,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = await req.json();
-    const { id, action } = body || {};
+    const bodyResult = await readJsonBodySizeLimited<{ id: string; action: string }>(req);
+    if (!bodyResult.ok) return bodyResult.error;
+    const body = bodyResult.data as { id: string; action: string };
+    const { id, action } = body;
 
     if (!id || !['approve', 'reject'].includes(action)) {
       return NextResponse.json({ error: 'Invalid id or action' }, { status: 400 });

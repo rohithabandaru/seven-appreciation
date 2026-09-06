@@ -39,8 +39,43 @@ const PRIVACY_REGEXES: { pattern: RegExp; reason: string }[] = [
 // Profanity / Abuse keywords — only words that are almost exclusively used abusively
 const PROFANITY_REGEX = /\b(bastard|bitch|slut)\b/i;
 
+// ── Obfuscation-resistant normalization ──────────────────────────────────────
+
+const LEET_MAP: Record<string, string> = {
+  '0': 'o', '3': 'e', '4': 'a', '5': 's', '7': 't', '1': 'i', '8': 'b',
+  '@': 'a', '$': 's', '!': 'i', '¢': 'c',
+};
+
+/**
+ * Normalize user content so filtered words can't slip past via leetspeak,
+ * diacritics, zero-width characters, or extra whitespace:
+ *   "B1TCH"        -> "bitch"
+ *   "g0 4tt4ck"    -> "go attack"
+ * Repeated letters are NOT collapsed here so real words keep their shape.
+ */
+export function normalizeText(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\u200b-\u200d\u2060\ufeff]/g, '')
+    .split('')
+    .map((c) => LEET_MAP[c] ?? c)
+    .join('')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Collapse repeated characters (e.g. "biiitch" -> "bitch"). */
+export function collapseRepeats(input: string): string {
+  return input.replace(/(.)\1+/g, (m: string, c: string) => c);
+}
+
+// ── Core check ───────────────────────────────────────────────────────────────
+
 export function checkContentModeration(content: string): ModerationCheckResult {
   const trimmed = content.trim();
+  const normalized = normalizeText(trimmed);
 
   if (!trimmed) {
     return {
@@ -53,7 +88,7 @@ export function checkContentModeration(content: string): ModerationCheckResult {
 
   // 1. Check for Comparisons and Fan War behaviors
   for (const item of COMPARISON_REGEXES) {
-    if (item.pattern.test(trimmed)) {
+    if (item.pattern.test(trimmed) || item.pattern.test(normalized)) {
       return {
         isAllowed: false,
         score: 0.95,
@@ -66,7 +101,7 @@ export function checkContentModeration(content: string): ModerationCheckResult {
 
   // 2. Check for Privacy Leaks
   for (const item of PRIVACY_REGEXES) {
-    if (item.pattern.test(trimmed)) {
+    if (item.pattern.test(trimmed) || item.pattern.test(normalized)) {
       return {
         isAllowed: false,
         score: 0.99,
@@ -77,8 +112,14 @@ export function checkContentModeration(content: string): ModerationCheckResult {
     }
   }
 
-  // 3. Check for Direct Profanity / Harassment
-  if (PROFANITY_REGEX.test(trimmed)) {
+  // 3. Check for Direct Profanity / Harassment (including repetition variants
+  //    like "biiitch" and leet variants like "b1tch").
+  if (
+    PROFANITY_REGEX.test(trimmed) ||
+    PROFANITY_REGEX.test(normalized) ||
+    PROFANITY_REGEX.test(collapseRepeats(normalized)) ||
+    PROFANITY_REGEX.test(collapseRepeats(trimmed))
+  ) {
     return {
       isAllowed: false,
       score: 0.85,

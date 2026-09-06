@@ -18,10 +18,29 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://seven-appreciation.vercel.app'),
   title: "Seven Appreciation — Support Without Attacking Anyone Else",
   description:
     "A peaceful digital sanctuary to celebrate the journeys, artistry, and inspirational impact of Heeseung, Jay, Jake, Sunghoon, Sunoo, Jungwon, and Ni-ki with genuine appreciation. No competition, no fan wars, no rankings.",
   manifest: "/manifest.json",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Seven Appreciation — Support Without Attacking Anyone Else",
+    description:
+      "A peaceful digital sanctuary to celebrate the journeys, artistry, and inspirational impact of HEESEUNG, JAY, JAKE, SUNGHOON, SUNOO, JUNGWON, and NI-KI with genuine appreciation.",
+    url: "/",
+    siteName: "Seven Appreciation",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary",
+    title: "Seven Appreciation — Support Without Attacking Anyone Else",
+    description:
+      "A peaceful digital sanctuary to celebrate ENHYPEN with genuine appreciation. No competition, no fan wars, no rankings.",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -42,7 +61,7 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${outfit.variable} ${outfit.className} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col bg-[#FFFDF9] text-zinc-900 dark:bg-[#121014] dark:text-zinc-100">

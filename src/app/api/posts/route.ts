@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { postSchema } from "@/lib/validations";
 import { Prisma } from "@prisma/client";
-import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse, checkPayloadSize } from '@/lib/rate-limit';
+import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse, checkPayloadSize, readJsonBodySizeLimited } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/ip';
 import { logSecurityEvent } from '@/lib/security-logger';
 import { checkContentModeration } from '@/lib/moderation';
@@ -142,7 +142,9 @@ export async function POST(req: NextRequest) {
     const rl = await checkRateLimit('post:' + session.user.id, RATE_LIMIT_POLICIES.post);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
-    const body = await req.json();
+    const bodyResult = await readJsonBodySizeLimited<Record<string, unknown>>(req);
+    if (!bodyResult.ok) return bodyResult.error;
+    const body = bodyResult.data as Record<string, unknown>;
     const result = postSchema.safeParse(body);
 
     if (!result.success) {
@@ -238,7 +240,9 @@ export async function PATCH(req: NextRequest) {
       return new NextResponse(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
 
-    const body = await req.json();
+    const bodyResult = await readJsonBodySizeLimited<{ id: string; action: string }>(req);
+    if (!bodyResult.ok) return bodyResult.error;
+    const body = bodyResult.data as { id: string; action: string };
     const { id, action } = body;
 
     if (!id || !action) {

@@ -23,6 +23,8 @@ export type SecurityEvent =
   | 'admin_auth_failed'
   | 'ip_banned'
   | 'ip_unbanned'
+  | 'user_banned'
+  | 'user_banned_login_blocked'
   | 'oauth_login_banned'
   | 'payload_too_large'
   | 'unauthorized_access_attempt'

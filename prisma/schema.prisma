@@ -41,6 +41,10 @@ model User {
   image         String?
   password      String?
   role          String    @default("user") // "user" or "admin"
+  bio           String?
+  createdAt     DateTime  @default(now())
+  bannedUser    BannedUser?
+  packClaims    PackClaim[]
 
   accounts Account[]
   sessions Session[]
@@ -197,6 +201,27 @@ model BannedIP {
   reason    String?
   bannedBy  String? // admin user id
   createdAt DateTime @default(now())
+}
+
+model BannedUser {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason    String?
+  bannedBy  String? // admin user id
+  createdAt DateTime @default(now())
+}
+
+model PackClaim {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day         String // UTC "YYYY-MM-DD"
+  packsOpened Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, day])
 }
 
 model Report {

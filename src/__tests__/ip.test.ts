@@ -7,7 +7,7 @@ describe('IP Extraction', () => {
 
   it('extracts IP from x-forwarded-for', () => {
     const req = makeRequest({ 'x-forwarded-for': '1.2.3.4, 5.6.7.8' });
-    expect(getClientIp(req)).toBe('1.2.3.4');
+    expect(getClientIp(req)).toBe('5.6.7.8');
   });
 
   it('extracts IP from x-real-ip', () => {
@@ -28,9 +28,16 @@ describe('IP Extraction', () => {
     expect(getClientIp(req)).toBe('1.1.1.1');
   });
 
-  it('takes first IP from x-forwarded-for chain', () => {
+  it('takes last (rightmost) IP from x-forwarded-for chain', () => {
     const req = makeRequest({ 'x-forwarded-for': '10.0.0.1, 10.0.0.2, 10.0.0.3' });
-    expect(getClientIp(req)).toBe('10.0.0.1');
+    expect(getClientIp(req)).toBe('10.0.0.3');
+  });
+
+  it('ignores forged leading x-forwarded-for entries (uses rightmost)', () => {
+    const req = makeRequest({
+      'x-forwarded-for': '6.6.6.6, 7.7.7.7, 198.51.100.9',
+    });
+    expect(getClientIp(req)).toBe('198.51.100.9');
   });
 
   it('handles single IP in x-forwarded-for', () => {
@@ -39,8 +46,13 @@ describe('IP Extraction', () => {
   });
 
   it('trims whitespace from IP', () => {
-    const req = makeRequest({ 'x-forwarded-for': '  1.2.3.4  , 5.6.7.8' });
-    expect(getClientIp(req)).toBe('1.2.3.4');
+    const req = makeRequest({ 'x-forwarded-for': '  1.2.3.4  ,   5.6.7.8 ' });
+    expect(getClientIp(req)).toBe('5.6.7.8');
+  });
+
+  it('skips empty trailing entries in x-forwarded-for', () => {
+    const req = makeRequest({ 'x-forwarded-for': '1.2.3.4, 5.6.7.8, ' });
+    expect(getClientIp(req)).toBe('5.6.7.8');
   });
 
   it('prefers x-real-ip when TRUSTED_PROXY is true', () => {

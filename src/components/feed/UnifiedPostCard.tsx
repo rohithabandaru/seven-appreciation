@@ -342,10 +342,13 @@ export default function UnifiedPostCard({
             className="absolute inset-0 bg-cover bg-center blur-2xl opacity-40 scale-110 pointer-events-none"
             style={{ backgroundImage: `url(${post.imageUrl})` }}
           />
-          <img
+          <Image
             src={post.imageUrl}
             alt={post.title || 'Post image'}
             onError={() => setImageError(true)}
+            width={720}
+            height={405}
+            priority={isPriority}
             className="relative max-h-[550px] w-full object-contain transition-transform duration-300 hover:scale-[1.01]"
           />
         </div>

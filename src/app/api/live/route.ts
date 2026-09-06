@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { liveMessageSchema } from '@/lib/validations';
-import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse, checkPayloadSize } from '@/lib/rate-limit';
+import { checkRateLimit, RATE_LIMIT_POLICIES, rateLimitResponse, checkPayloadSize, readJsonBodySizeLimited } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/ip';
 import { logSecurityEvent } from '@/lib/security-logger';
 import { checkContentModeration } from '@/lib/moderation';
@@ -47,7 +47,9 @@ export async function POST(request: Request) {
     const rl = await checkRateLimit('liveMessage:' + session.user.id, RATE_LIMIT_POLICIES.liveMessage);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
-    const body = await request.json();
+    const bodyResult = await readJsonBodySizeLimited<Record<string, unknown>>(request);
+    if (!bodyResult.ok) return bodyResult.error;
+    const body = bodyResult.data as Record<string, unknown>;
     const result = liveMessageSchema.safeParse(body);
 
     if (!result.success) {

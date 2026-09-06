@@ -9,6 +9,7 @@ import PackOpeningModal from '@/components/binder/PackOpeningModal';
 import { PHOTOCARDS_DATA, Photocard } from '@/lib/data/photocardsData';
 import { MEMBERS_DATA } from '@/lib/data/membersData';
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 import {
   Sparkles,
   Gift,
@@ -20,8 +21,10 @@ import {
 const RARITIES = ['All', 'Common', 'Rare', 'Holo', 'Secret', 'Wishlist'] as const;
 
 export default function BinderPage() {
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const [unlockedCardIds, setUnlockedCardIds] = useState<Set<string>>(new Set());
+  const [isLoadingCards, setIsLoadingCards] = useState(true);
+  const [fetchFailed, setFetchFailed] = useState(false);
   const [wishlistCardIds, setWishlistCardIds] = useState<Set<string>>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -57,90 +60,50 @@ export default function BinderPage() {
     });
   };
 
-  const seedStarterCards = () => {
-    const starterIds = ['pc-hs-1', 'pc-jw-1', 'pc-nk-1'];
-    setUnlockedCardIds(new Set(starterIds));
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('seven_unlocked_photocards', JSON.stringify(starterIds));
-    }
-  };
+  const isSignedIn = Boolean(session?.user?.id);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (session?.user?.id) {
-        fetch('/api/photocards')
-          .then((res) => res.json())
-          .then((data: { cardIds: string[] }) => {
-            const serverIds = data.cardIds ?? [];
-            setUnlockedCardIds(new Set(serverIds));
+    if (sessionStatus === 'loading') return;
 
-            const localStored = localStorage.getItem('seven_unlocked_photocards');
-            if (localStored) {
-              try {
-                const localIds: string[] = JSON.parse(localStored);
-                const extras = localIds.filter((id) => !serverIds.includes(id));
-                if (extras.length > 0) {
-                  fetch('/api/photocards/merge', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ cardIds: extras }),
-                  })
-                    .then((mergeRes) => {
-                      if (mergeRes.ok) {
-                        return mergeRes.json();
-                      }
-                      throw new Error('Merge failed');
-                    })
-                    .then((mergedData: { cardIds?: string[] }) => {
-                      if (mergedData.cardIds) {
-                        setUnlockedCardIds(new Set(mergedData.cardIds));
-                      }
-                      localStorage.removeItem('seven_unlocked_photocards');
-                    })
-                    .catch(() => {
-                      // Preserve local cards in localStorage if merge fails so retry happens on next session
-                    });
-                } else {
-                  localStorage.removeItem('seven_unlocked_photocards');
-                }
-              } catch {
-                // ignore malformed localStorage
-              }
-            }
-          })
-          .catch(() => seedStarterCards());
-      } else {
-        const stored = localStorage.getItem('seven_unlocked_photocards');
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setUnlockedCardIds(new Set(parsed));
-          } catch {
-            seedStarterCards();
-          }
-        } else {
-          seedStarterCards();
-        }
-      }
+    if (session?.user?.id) {
+      fetch('/api/photocards')
+        .then((res) => {
+          if (!res.ok) throw new Error('Failed to load binder');
+          return res.json();
+        })
+        .then((data: { cardIds: string[] }) => {
+          setUnlockedCardIds(new Set(data.cardIds ?? []));
+        })
+        .catch(() => {
+          setFetchFailed(true);
+          setUnlockedCardIds(new Set());
+        })
+        .finally(() => setIsLoadingCards(false));
+    } else {
+      // Server-authoritative binder: signed-out viewers see a locked album.
+      queueMicrotask(() => {
+        setUnlockedCardIds(new Set());
+        setIsLoadingCards(false);
+      });
     }
-  }, [session?.user?.id]);
+  }, [session?.user?.id, sessionStatus]);
+
+  const handleOpenPackClick = () => {
+    if (!isSignedIn) {
+      setToast({
+        type: 'warning',
+        title: 'Sign In Required',
+        message: 'Please sign in to collect photocards in your binder.',
+      });
+      return;
+    }
+    setIsPackModalOpen(true);
+  };
 
   const handleCardsUnlocked = (newCards: Photocard[]) => {
     setUnlockedCardIds((prev) => {
       const next = new Set(prev);
       newCards.forEach((c) => next.add(c.id));
-      const arrayToSave = Array.from(next);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('seven_unlocked_photocards', JSON.stringify(arrayToSave));
-      }
-      if (session?.user?.id) {
-        fetch('/api/photocards', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ cardIds: arrayToSave }),
-        });
-      }
       return next;
     });
 
@@ -210,7 +173,7 @@ export default function BinderPage() {
             {/* Daily Pack Open CTA Button */}
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
-                onClick={() => setIsPackModalOpen(true)}
+                onClick={handleOpenPackClick}
                 className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-rose-500 via-rose-600 to-amber-500 px-8 py-4 text-sm font-extrabold text-white shadow-xl shadow-rose-300/40 hover:opacity-95 transition-all hover:scale-105"
               >
                 <Gift className="h-5 w-5 animate-bounce" />
@@ -301,7 +264,7 @@ export default function BinderPage() {
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setIsPackModalOpen(true)}
+                  onClick={handleOpenPackClick}
                   className="inline-flex items-center gap-1.5 rounded-2xl bg-rose-500 hover:bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all"
                 >
                   <Gift className="h-3.5 w-3.5" />
@@ -327,6 +290,31 @@ export default function BinderPage() {
                 Showing {filteredCards.length} Cards
               </span>
             </div>
+
+            {!isSignedIn && sessionStatus !== 'loading' ? (
+              <div className="mb-8 flex flex-col items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50/70 px-6 py-5 text-center">
+                <p className="text-sm font-bold text-rose-700">
+                  Sign in to collect photocards & open daily booster packs!
+                </p>
+                <Link
+                  href="/login"
+                  className="rounded-xl bg-rose-500 px-5 py-2 text-xs font-extrabold text-white shadow-sm transition-colors hover:bg-rose-600"
+                >
+                  Sign In / Register
+                </Link>
+              </div>
+            ) : null}
+
+            {isLoadingCards ? (
+              <div className="flex items-center justify-center py-16 text-sm font-bold text-zinc-400">
+                <Sparkles className="h-5 w-5 animate-spin mr-2 text-amber-500" />
+                Loading your binder...
+              </div>
+            ) : fetchFailed ? (
+              <div className="flex items-center justify-center py-16 text-center text-sm text-zinc-500">
+                Could not load your collection. Please refresh to try again.
+              </div>
+            ) : null}
 
             {/* Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 justify-items-center">
