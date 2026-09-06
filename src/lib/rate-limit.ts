@@ -168,6 +168,9 @@ export const RATE_LIMIT_POLICIES = {
 
   /** Live Lounge hearts: 30 per 5 minutes per user */
   liveHeart: { windowMs: 5 * 60 * 1000, maxRequests: 30 },
+
+  /** Analytics tracking: 60 per 15 minutes per IP */
+  analyticsTrack: { windowMs: 15 * 60 * 1000, maxRequests: 60 },
 } as const;
 
 // ── Helper: apply rate limit and return 429 response ─────────────────────────

@@ -136,6 +136,26 @@
   animation: floatUp 0.6s ease-out forwards;
 }
 
+/* Floating hearts rise across the screen in the Live Lounge */
+@keyframes floatUpAcross {
+  0% {
+    transform: translateY(0) translateX(0) scale(0.8);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-110vh) translateX(var(--float-drift, 0px)) scale(1.1);
+    opacity: 0;
+  }
+}
+
+.animate-float-up {
+  animation: floatUpAcross 2.5s ease-out forwards;
+  --float-drift: 0px;
+}
+
 /* Pulse Glow */
 .pulse-glow {
   box-shadow: 0 0 25px rgba(244, 63, 94, 0.2);

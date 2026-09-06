@@ -321,6 +321,18 @@ model SecurityLog {
   @@index([createdAt])
 }
 
+model VisitLog {
+  id          String   @id @default(cuid())
+  fingerprint String
+  day         String
+  path        String?
+  createdAt   DateTime @default(now())
+
+  @@unique([fingerprint, day])
+  @@index([day])
+  @@index([createdAt])
+}
+
 model UploadedFile {
   id           String   @id @default(cuid())
   ownerId      String

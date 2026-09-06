@@ -3,6 +3,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/components/providers/AuthProvider";
 import RegisterPWA from "@/components/providers/RegisterPWA";
+import VisitTracker from "@/components/providers/VisitTracker";
 import FloatingCoffee from "@/components/ui/FloatingCoffee";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </a>
         <AuthProvider>
           <RegisterPWA />
+          <VisitTracker />
           <FloatingCoffee />
           {children}
         </AuthProvider>

@@ -60,3 +60,9 @@
 2026-08-30T10:55:38.925Z session ok
 2026-08-30T10:55:38.936Z formData parsed file=enhypen.jpg type=image/jpeg size=50058 purpose=post-image
 2026-08-30T10:55:38.940Z validation=PASS
+2026-09-02T18:36:51.661Z session ok
+2026-09-02T18:36:51.665Z REJECT 400 No valid file provided
+2026-09-02T18:45:00.918Z session ok
+2026-09-02T18:45:00.921Z REJECT 400 No valid file provided
+2026-09-02T18:53:24.022Z session ok
+2026-09-02T18:53:24.024Z REJECT 400 No valid file provided

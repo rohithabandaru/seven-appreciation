@@ -8,7 +8,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Toast from '@/components/ui/Toast';
 import { Report, Post, AppreciationMessage } from '@/types';
-import { ShieldCheck, ShieldAlert, CheckCircle, Ban, EyeOff, Trash2, AlertTriangle, LogIn, Loader2 } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, CheckCircle, Ban, EyeOff, Trash2, AlertTriangle, LogIn, Loader2, BarChart3 } from 'lucide-react';
 export default function AdminDashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -17,6 +17,13 @@ export default function AdminDashboardPage() {
   const [pendingPosts, setPendingPosts] = useState<Post[]>([]);
   const [appreciations, setAppreciations] = useState<AppreciationMessage[]>([]);
   const [auditLogs, setAuditLogs] = useState<{ action: string; time: string }[]>([]);
+  const [analytics, setAnalytics] = useState<{
+    today: number;
+    week: number;
+    month: number;
+    totalUnique: number;
+    series: { day: string; visits: number }[];
+  } | null>(null);
 
   const [toast, setToast] = useState<{ type: 'success' | 'warning' | 'error'; title: string; message: string } | null>(null);
 
@@ -32,11 +39,12 @@ export default function AdminDashboardPage() {
     if (!isAdmin) return;
     async function loadData() {
       try {
-        const [repRes, postRes, appRes, pendingRes] = await Promise.all([
+        const [repRes, postRes, appRes, pendingRes, analyticsRes] = await Promise.all([
           fetch('/api/reports'),
           fetch('/api/posts'),
           fetch('/api/appreciations'),
-          fetch('/api/admin/posts?status=pending')
+          fetch('/api/admin/posts?status=pending'),
+          fetch('/api/analytics/stats')
         ]);
         if (repRes.ok) {
           const repJson = await repRes.json();
@@ -53,6 +61,10 @@ export default function AdminDashboardPage() {
         if (pendingRes.ok) {
           const pendingJson = await pendingRes.json();
           setPendingPosts(Array.isArray(pendingJson) ? pendingJson : pendingJson.data || []);
+        }
+        if (analyticsRes.ok) {
+          const analyticsJson = await analyticsRes.json();
+          setAnalytics(analyticsJson);
         }
       } catch (err) {
         console.error("Failed to load admin data", err);
@@ -285,6 +297,58 @@ export default function AdminDashboardPage() {
             <span className="text-xs font-bold text-zinc-400 uppercase">Active Community Posts</span>
             <div className="text-3xl font-extrabold text-amber-600">{posts.length}</div>
           </div>
+        </div>
+
+        {/* WEBSITE VISITOR STATISTICS */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-sky-600" />
+            <span>Website Visitors</span>
+          </h2>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+            <div className="rounded-3xl border border-sky-100 bg-white p-6 shadow-xs space-y-1">
+              <span className="text-xs font-bold text-zinc-400 uppercase">Today</span>
+              <div className="text-3xl font-extrabold text-sky-600">{analytics?.today ?? '-'}</div>
+            </div>
+            <div className="rounded-3xl border border-emerald-100 bg-white p-6 shadow-xs space-y-1">
+              <span className="text-xs font-bold text-zinc-400 uppercase">Last 7 Days</span>
+              <div className="text-3xl font-extrabold text-emerald-600">{analytics?.week ?? '-'}</div>
+            </div>
+            <div className="rounded-3xl border border-teal-100 bg-white p-6 shadow-xs space-y-1">
+              <span className="text-xs font-bold text-zinc-400 uppercase">Last 30 Days</span>
+              <div className="text-3xl font-extrabold text-teal-600">{analytics?.month ?? '-'}</div>
+            </div>
+            <div className="rounded-3xl border border-violet-100 bg-white p-6 shadow-xs space-y-1">
+              <span className="text-xs font-bold text-zinc-400 uppercase">All-Time Visitors</span>
+              <div className="text-3xl font-extrabold text-violet-600">{analytics?.totalUnique ?? '-'}</div>
+            </div>
+          </div>
+
+          {analytics?.series && (
+            <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-xs">
+              <span className="text-xs font-bold text-zinc-400 uppercase">Daily Visitors — Last 7 Days</span>
+              <div className="mt-4 flex items-end gap-2 sm:gap-3">
+                {analytics.series.map((item) => {
+                  const max = Math.max(...analytics.series.map((s) => s.visits), 1);
+                  const height = Math.max((item.visits / max) * 100, 4);
+                  return (
+                    <div key={item.day} className="flex-1 flex flex-col items-center gap-1">
+                      <span className="text-xs font-bold text-zinc-600">{item.visits}</span>
+                      <div
+                        className="w-full rounded-xl bg-gradient-to-t from-sky-500 to-emerald-400"
+                        style={{ height: `${height}px` }}
+                        title={item.day}
+                      />
+                      <span className="text-[10px] font-semibold text-zinc-400">
+                        {item.day.slice(5)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* REPORTS QUEUE */}
