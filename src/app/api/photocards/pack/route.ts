@@ -32,15 +32,34 @@ export async function POST(req: Request) {
     if (!bodyResult.ok) return bodyResult.error;
 
     const day = getDayKey();
-    const pulled = pickPackCards();
 
-    // Atomic daily gate: updateMany only succeeds while the user still has
-    // packs left today, so concurrent requests cannot exceed the limit.
+    // Ensure a pack-claim row exists for today.
     await prisma.packClaim.upsert({
       where: { userId_day: { userId, day } },
       update: {},
       create: { userId, day, packsOpened: 0 },
     });
+
+    // Reroll until the pack contains at least one card the user has not
+    // unlocked yet, so an all-duplicate pack never wastes a daily slot.
+    // The bound prevents an infinite loop when a user has (nearly) everything.
+    const MAX_REROLLS = 50;
+    let pulled = pickPackCards();
+    let ownedSet = new Set<string>();
+    for (let attempt = 0; attempt < MAX_REROLLS; attempt++) {
+      const owned = await prisma.unlockedPhotocard.findMany({
+        where: { userId, cardId: { in: pulled.map((c) => c.id) } },
+        select: { cardId: true },
+      });
+      ownedSet = new Set(owned.map((r) => r.cardId));
+      if (pulled.some((c) => !ownedSet.has(c.id))) {
+        break;
+      }
+      pulled = pickPackCards();
+    }
+
+    // Atomic daily gate: updateMany only succeeds while the user still has
+    // packs left today, so concurrent requests cannot exceed the limit.
     const gated = await prisma.packClaim.updateMany({
       where: { userId, day, packsOpened: { lt: MAX_PACKS_PER_DAY } },
       data: { packsOpened: { increment: 1 } },
@@ -58,11 +77,6 @@ export async function POST(req: Request) {
       skipDuplicates: true,
     });
 
-    const existing = await prisma.unlockedPhotocard.findMany({
-      where: { userId, cardId: { in: pulled.map((c) => c.id) } },
-      select: { cardId: true },
-    });
-    const ownedSet = new Set(existing.map((r) => r.cardId));
     const alreadyOwned = pulled.filter((c) => ownedSet.has(c.id));
 
     const claim = await prisma.packClaim.findUnique({

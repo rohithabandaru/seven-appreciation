@@ -26,7 +26,19 @@ export async function GET(req: NextRequest) {
       take: 200,
     });
 
-    return NextResponse.json(milestones);
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
+    let likedIds: Set<string> = new Set();
+    if (userId && milestones.length > 0) {
+      const likes = await prisma.milestoneLike.findMany({
+        where: { userId, milestoneId: { in: milestones.map((m) => m.id) } },
+        select: { milestoneId: true },
+      });
+      likedIds = new Set(likes.map((l) => l.milestoneId));
+    }
+
+    const data = milestones.map((m) => ({ ...m, likedByMe: likedIds.has(m.id) }));
+    return NextResponse.json(data);
   } catch (error: unknown) {
     console.error('GET /api/milestones error:', error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
@@ -79,7 +91,7 @@ export async function POST(req: NextRequest) {
         eventDate: eventDate.trim(),
         category: category || 'Milestone',
         sourceUrl: sourceUrl?.trim() || null,
-        status: 'pending',
+        status: 'approved',
       },
     });
 

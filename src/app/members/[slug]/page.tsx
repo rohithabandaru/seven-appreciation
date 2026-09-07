@@ -104,10 +104,7 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
       .then(res => res.json())
       .then(json => {
         const arr = Array.isArray(json) ? json : json?.data;
-        setAppreciations((Array.isArray(arr) ? arr : []).map(m => ({
-          ...m,
-          likedBy: []
-        })));
+        setAppreciations(Array.isArray(arr) ? arr : []);
       })
       .catch(() => setAppreciations([]));
 

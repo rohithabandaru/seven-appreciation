@@ -10,7 +10,8 @@ import { logSecurityEvent } from '@/lib/security-logger';
 import { checkContentModeration } from '@/lib/moderation';
 
 function isAllowedImageUrl(url: string): boolean {
-  if (url.startsWith('/uploads/')) return true;
+  // Local uploads (public/uploads) are disabled to avoid growing server/Database storage.
+  if (url.startsWith('/uploads/')) return false;
   try {
     const parsed = new URL(url);
     if (parsed.hostname === 'images.unsplash.com') return true;
@@ -26,6 +27,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const memberId = searchParams.get('memberId');
     const type = searchParams.get('type');
+    const q = searchParams.get('q')?.trim();
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50', 10)));
     const skip = (page - 1) * limit;
@@ -36,6 +38,14 @@ export async function GET(req: NextRequest) {
     }
     if (type && type !== 'all') {
       whereClause.type = type.toLowerCase();
+    }
+    if (q) {
+      whereClause.OR = [
+        { title: { contains: q, mode: 'insensitive' } },
+        { content: { contains: q, mode: 'insensitive' } },
+        { type: { contains: q, mode: 'insensitive' } },
+        { user: { name: { contains: q, mode: 'insensitive' } } },
+      ];
     }
 
     const session = await getServerSession(authOptions);

@@ -27,19 +27,10 @@ export default function SearchPage() {
       setIsLoading(true);
       setHasSearched(true);
       try {
-        const res = await fetch(`/api/posts?page=1&limit=50`);
+        const res = await fetch(`/api/posts?page=1&limit=50&q=${encodeURIComponent(trimmed)}`);
         if (res.ok) {
           const data = await res.json();
-          const allPosts: Post[] = data.data || [];
-          // Client-side filter by query
-          const filtered = allPosts.filter(
-            (p) =>
-              p.title?.toLowerCase().includes(trimmed) ||
-              p.content?.toLowerCase().includes(trimmed) ||
-              p.category?.toLowerCase().includes(trimmed) ||
-              p.userName?.toLowerCase().includes(trimmed)
-          );
-          setPosts(filtered);
+          setPosts(data.data || []);
         }
       } catch {
         // silently fail

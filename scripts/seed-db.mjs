@@ -250,16 +250,23 @@ const DEMO_LETTERS = [
 async function seed() {
   console.log('Seeding initial data into Prisma Postgres...')
 
-  const hashedPassword = await bcrypt.hash(DEMO_PASSWORD, 10)
-
-  for (const user of DEMO_USERS) {
-    await prisma.user.upsert({
-      where: { email: user.email },
-      update: {},
-      create: { ...user, password: hashedPassword, emailVerified: new Date() }
-    })
+  const allowDemoUsers = process.env.ALLOW_DEMO_SEED === 'true' || process.env.NODE_ENV !== 'production'
+  if (!allowDemoUsers) {
+    console.log('Skipping demo users in production (set ALLOW_DEMO_SEED=true to force).')
   }
-  console.log(`Seeded ${DEMO_USERS.length} demo users (password: ${DEMO_PASSWORD})`)
+
+  if (allowDemoUsers) {
+    const hashedPassword = await bcrypt.hash(DEMO_PASSWORD, 10)
+
+    for (const user of DEMO_USERS) {
+      await prisma.user.upsert({
+        where: { email: user.email },
+        update: {},
+        create: { ...user, password: hashedPassword, emailVerified: new Date() }
+      })
+    }
+    console.log(`Seeded ${DEMO_USERS.length} demo users (password: ${DEMO_PASSWORD})`)
+  }
 
   for (const msg of INITIAL_APPRECIATION_MESSAGES) {
     await prisma.appreciationMessage.upsert({
@@ -270,24 +277,28 @@ async function seed() {
   }
   console.log(`Seeded ${INITIAL_APPRECIATION_MESSAGES.length} appreciation messages`)
 
-  for (const post of DEMO_POSTS) {
-    const { id, ...data } = post
-    await prisma.post.upsert({
-      where: { id },
-      update: {},
-      create: { id, ...data, status: 'approved', mediaUrl: null }
-    })
-  }
-  console.log(`Seeded ${DEMO_POSTS.length} community feed posts`)
+  if (allowDemoUsers) {
+    for (const post of DEMO_POSTS) {
+      const { id, ...data } = post
+      await prisma.post.upsert({
+        where: { id },
+        update: {},
+        create: { id, ...data, status: 'approved', mediaUrl: null }
+      })
+    }
+    console.log(`Seeded ${DEMO_POSTS.length} community feed posts`)
 
-  for (const letter of DEMO_LETTERS) {
-    await prisma.letter.upsert({
-      where: { id: letter.id },
-      update: {},
-      create: letter
-    })
+    for (const letter of DEMO_LETTERS) {
+      await prisma.letter.upsert({
+        where: { id: letter.id },
+        update: {},
+        create: letter
+      })
+    }
+    console.log(`Seeded ${DEMO_LETTERS.length} letters`)
+  } else {
+    console.log('Skipped demo posts and letters (authors are demo users).')
   }
-  console.log(`Seeded ${DEMO_LETTERS.length} letters`)
 
   console.log('Seeding completed successfully!')
   await prisma.$disconnect()

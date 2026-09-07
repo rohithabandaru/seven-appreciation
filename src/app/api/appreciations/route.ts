@@ -31,8 +31,24 @@ export async function GET(request: Request) {
       prisma.appreciationMessage.count({ where }),
     ])
 
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
+    let likedIds: string[] = [];
+    if (userId && messages.length > 0) {
+      const likes = await prisma.appreciationLike.findMany({
+        where: { userId, appreciationId: { in: messages.map((m) => m.id) } },
+        select: { appreciationId: true },
+      });
+      likedIds = likes.map((l) => l.appreciationId);
+    }
+
+    const data = messages.map((m) => ({
+      ...m,
+      likedBy: likedIds.includes(m.id) && userId ? [userId] : [],
+    }));
+
     return NextResponse.json({
-      data: messages,
+      data,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     })
   } catch (error) {

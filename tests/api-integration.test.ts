@@ -466,7 +466,7 @@ describe('Content Creation', () => {
       expect(res.status).toBe(400);
     });
 
-    it('creates post with pending status awaiting moderation', async () => {
+    it('creates post with approved status published immediately', async () => {
       mockSession = { user: { id: 'user-1', name: 'Kind Fan', image: null, role: 'user' } };
       mockPrisma.post.create.mockResolvedValue({
         id: 'post-123',

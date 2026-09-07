@@ -71,6 +71,7 @@ export default function AchievementsPage() {
       if (res.ok) {
         const data = await res.json();
         setCommunityMilestones(data);
+        setLikedIds(new Set(data.filter((m: CommunityMilestone & { likedByMe?: boolean }) => m.likedByMe).map((m: CommunityMilestone) => m.id)));
       }
     } catch (err) {
       console.error('Failed to fetch milestones:', err);

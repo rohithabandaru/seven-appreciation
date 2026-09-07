@@ -38,6 +38,9 @@ function LoginContent() {
   const callbackUrl = searchParams.get('callbackUrl') || '/';
   const { status } = useSession();
 
+  // Demo accounts are only available in development or when explicitly enabled.
+  const allowDemo = process.env.NEXT_PUBLIC_ALLOW_DEMO === 'true' || process.env.NODE_ENV === 'development';
+
   const [activeTab, setActiveTab] = useState<'signin' | 'signup' | 'demo'>('signin');
   
   // Sign in / Sign up form states
@@ -74,7 +77,7 @@ function LoginContent() {
       }));
     }
 
-    fetch('/api/ban')
+    fetch('/api/ban/status')
       .then(res => res.json())
       .then(data => {
         if (data.banned) {
@@ -167,7 +170,7 @@ function LoginContent() {
         }
       }
 
-      const isDemoUser = ['supporter', 'mod', 'aria', 'sunny', 'supporter@seven.app', 'mod@seven.app', 'aria@seven.app', 'sunny@seven.app', 'kind supporter', 'community moderator'].includes(email.trim().toLowerCase());
+      const isDemoUser = allowDemo && ['supporter', 'aria', 'sunny', 'supporter@seven.app', 'aria@seven.app', 'sunny@seven.app', 'kind supporter'].includes(email.trim().toLowerCase());
 
       if (activeTab === 'signin' && !password.trim() && !isDemoUser) {
         setToast({
@@ -217,8 +220,12 @@ function LoginContent() {
     }
   };
 
-  // Quick One-Click Demo Logins
+  // Quick One-Click Demo Logins (dev only)
   const handleQuickDemo = async (roleName: string, roleEmail: string) => {
+    if (!allowDemo) {
+      setToast({ type: 'error', title: 'Demo Disabled', message: 'Demo accounts are only available in development.' });
+      return;
+    }
     if (isBanned) {
       setToast({
         type: 'error',
@@ -418,18 +425,20 @@ function LoginContent() {
                   <UserPlus className="h-3.5 w-3.5" />
                   <span>Sign Up</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('demo')}
-                  className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-                    activeTab === 'demo'
-                      ? 'bg-white text-rose-600 shadow-sm border border-zinc-200/60 font-black'
-                      : 'text-zinc-500 hover:text-zinc-900'
-                  }`}
-                >
-                  <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-400" />
-                  <span>Quick Demo</span>
-                </button>
+                {allowDemo && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('demo')}
+                    className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                      activeTab === 'demo'
+                        ? 'bg-white text-rose-600 shadow-sm border border-zinc-200/60 font-black'
+                        : 'text-zinc-500 hover:text-zinc-900'
+                    }`}
+                  >
+                    <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-400" />
+                    <span>Quick Demo</span>
+                  </button>
+                )}
               </div>
 
               {/* TAB 1 & 2: SIGN IN / SIGN UP FORM */}
@@ -477,7 +486,7 @@ function LoginContent() {
                         <Lock className="h-3.5 w-3.5 text-zinc-400" />
                         <span>Password</span>
                       </span>
-                      {activeTab === 'signin' && (
+                      {activeTab === 'signin' && allowDemo && (
                         <span className="text-[10px] text-zinc-400">Optional for demo access</span>
                       )}
                     </label>
@@ -532,8 +541,8 @@ function LoginContent() {
                 </form>
               )}
 
-              {/* TAB 3: QUICK DEMO PROFILES */}
-              {activeTab === 'demo' && (
+              {/* TAB 3: QUICK DEMO PROFILES (dev only) */}
+              {activeTab === 'demo' && allowDemo && (
                 <div className="space-y-4 animate-in fade-in duration-200">
                   <p className="text-xs text-zinc-500">
                     Select a ready-to-use profile to test the application instantly without filling out a form:
@@ -559,17 +568,17 @@ function LoginContent() {
                     <button
                       type="button"
                       disabled={isLoading}
-                      onClick={() => handleQuickDemo('Community Moderator', 'mod@seven.app')}
-                      className="group flex flex-col items-start p-4 rounded-2xl border border-purple-200 bg-purple-50/40 hover:bg-purple-50 hover:border-purple-300 transition-all text-left shadow-xs hover:scale-[1.02]"
+                      onClick={() => handleQuickDemo('Aria_Vocalist', 'aria@seven.app')}
+                      className="group flex flex-col items-start p-4 rounded-2xl border border-amber-200 bg-amber-50/40 hover:bg-amber-50 hover:border-amber-300 transition-all text-left shadow-xs hover:scale-[1.02]"
                     >
                       <div className="flex items-center justify-between w-full mb-2">
-                        <div className="h-8 w-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                          🛡️
+                        <div className="h-8 w-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                          🎤
                         </div>
-                        <ArrowRight className="h-4 w-4 text-purple-400 group-hover:translate-x-1 transition-transform" />
+                        <ArrowRight className="h-4 w-4 text-amber-400 group-hover:translate-x-1 transition-transform" />
                       </div>
-                      <span className="text-xs font-bold text-zinc-900 block">Moderator Pass</span>
-                      <span className="text-[10px] text-zinc-500">Review flagged content & moderation hub</span>
+                      <span className="text-xs font-bold text-zinc-900 block">Aria Vocalist Pass</span>
+                      <span className="text-[10px] text-zinc-500">Join member appreciation, leave messages</span>
                     </button>
                   </div>
                 </div>

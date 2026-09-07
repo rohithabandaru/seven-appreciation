@@ -14,7 +14,6 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const [reports, setReports] = useState<Report[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [pendingPosts, setPendingPosts] = useState<Post[]>([]);
   const [appreciations, setAppreciations] = useState<AppreciationMessage[]>([]);
   const [auditLogs, setAuditLogs] = useState<{ action: string; time: string }[]>([]);
   const [analytics, setAnalytics] = useState<{
@@ -39,11 +38,10 @@ export default function AdminDashboardPage() {
     if (!isAdmin) return;
     async function loadData() {
       try {
-        const [repRes, postRes, appRes, pendingRes, analyticsRes] = await Promise.all([
+        const [repRes, postRes, appRes, analyticsRes] = await Promise.all([
           fetch('/api/reports'),
           fetch('/api/posts'),
           fetch('/api/appreciations'),
-          fetch('/api/admin/posts?status=pending'),
           fetch('/api/analytics/stats')
         ]);
         if (repRes.ok) {
@@ -58,10 +56,6 @@ export default function AdminDashboardPage() {
           const appJson = await appRes.json();
           setAppreciations(Array.isArray(appJson) ? appJson : appJson.data || []);
         }
-        if (pendingRes.ok) {
-          const pendingJson = await pendingRes.json();
-          setPendingPosts(Array.isArray(pendingJson) ? pendingJson : pendingJson.data || []);
-        }
         if (analyticsRes.ok) {
           const analyticsJson = await analyticsRes.json();
           setAnalytics(analyticsJson);
@@ -74,56 +68,15 @@ export default function AdminDashboardPage() {
   }, [isAdmin]);
 
   const handleExecuteAction = async (reportId: string, action: 'dismiss' | 'hide' | 'remove' | 'warn_user' | 'ban_user') => {
-    // If banning, use the captured IP from the report (or prompt as fallback)
+    // ban_user bans the AUTHOR of the reported content (server-side account
+    // ban via /api/reports/[id]/action) — never the reporter's IP.
     if (action === 'ban_user') {
-      const report = reports.find(r => r.id === reportId);
-      let ip = report?.reporterIp;
-
-      // If IP was captured, confirm with admin. If not, prompt manually.
-      if (ip && ip !== 'unknown') {
-        const confirmed = confirm(`Ban this IP address?\n\nIP: ${ip}\n\nThis user will not be able to log in anymore.`);
-        if (!confirmed) {
-          setToast({
-            type: 'warning',
-            title: 'Ban Cancelled',
-            message: 'Admin cancelled the ban action.'
-          });
-          return;
-        }
-      } else {
-        ip = prompt('IP address could not be auto-detected. Enter the IP address to ban:') || '';
-        if (!ip.trim()) {
-          setToast({
-            type: 'warning',
-            title: 'Ban Cancelled',
-            message: 'No IP address provided. Ban was not applied.'
-          });
-          return;
-        }
-      }
-
-      try {
-        const res = await fetch('/api/ban', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ip: ip.trim(),
-            reason: `Banned via report #${reportId}`,
-          })
-        });
-
-        if (!res.ok) throw new Error('Failed to ban IP');
-
+      const confirmed = confirm('Ban the author of this reported content? They will not be able to log in anymore.');
+      if (!confirmed) {
         setToast({
-          type: 'success',
-          title: 'IP Banned',
-          message: `IP address ${ip.trim()} has been banned. They cannot log in anymore.`
-        });
-      } catch {
-        setToast({
-          type: 'error',
-          title: 'Ban Failed',
-          message: 'Could not ban the IP. Please try again.'
+          type: 'warning',
+          title: 'Ban Cancelled',
+          message: 'Admin cancelled the ban action.'
         });
         return;
       }
@@ -161,7 +114,13 @@ export default function AdminDashboardPage() {
       };
       setAuditLogs([logEntry, ...auditLogs]);
 
-      if (action !== 'ban_user') {
+      if (action === 'ban_user') {
+        setToast({
+          type: 'success',
+          title: 'Account Banned',
+          message: 'The author of the reported content has been banned from logging in.'
+        });
+      } else {
         setToast({
           type: 'success',
           title: 'Action Persisted',
@@ -173,37 +132,6 @@ export default function AdminDashboardPage() {
         type: 'error',
         title: 'Action Failed',
         message: 'Could not save moderation action. Please try again.'
-      });
-    }
-  };
-
-  const handleModeratePost = async (postId: string, action: 'approve' | 'reject') => {
-    try {
-      const res = await fetch('/api/admin/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: postId, action }),
-      });
-
-      if (!res.ok) throw new Error('Failed to moderate post');
-
-      setPendingPosts((prev) => prev.filter((p) => p.id !== postId));
-      setToast({
-        type: 'success',
-        title: action === 'approve' ? 'Post Approved' : 'Post Rejected',
-        message: `The post was ${action === 'approve' ? 'approved and published' : 'rejected and hidden'}.`
-      });
-
-      const logEntry = {
-        action: `${action.toUpperCase()} post ${postId}`,
-        time: new Date().toLocaleTimeString()
-      };
-      setAuditLogs([logEntry, ...auditLogs]);
-    } catch {
-      setToast({
-        type: 'error',
-        title: 'Moderation Failed',
-        message: 'Could not moderate the post. Please try again.'
       });
     }
   };
@@ -449,74 +377,6 @@ export default function AdminDashboardPage() {
                       </button>
                     </div>
                   )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* PENDING POSTS MODERATION QUEUE */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-rose-600" />
-            <span>Post Moderation Queue — Pending ({pendingPosts.length})</span>
-          </h2>
-
-          {pendingPosts.length === 0 ? (
-            <div className="rounded-3xl border border-zinc-200 bg-white p-8 text-center text-xs text-zinc-500">
-              <CheckCircle className="mx-auto h-8 w-8 text-emerald-500 mb-2" />
-              <p>No posts awaiting review.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {pendingPosts.map((post) => (
-                <div
-                  key={post.id}
-                  className="rounded-3xl border border-rose-100 bg-white p-6 shadow-xs space-y-3"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-700">
-                          {post.category || post.type}
-                        </span>
-                        {post.memberId && (
-                          <span className="text-xs font-mono text-zinc-400">{post.memberId}</span>
-                        )}
-                      </div>
-                      <p className="mt-2 font-semibold text-zinc-900 truncate">{post.title || 'Untitled'}</p>
-                    </div>
-                    <span className="shrink-0 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
-                      pending
-                    </span>
-                  </div>
-
-                  {post.content && (
-                    <p className="rounded-2xl bg-zinc-50 p-4 border border-zinc-100 text-xs text-zinc-700 line-clamp-3">
-                      {post.content}
-                    </p>
-                  )}
-
-                  {post.imageUrl && (
-                    <p className="text-xs font-mono text-zinc-400 break-all">{post.imageUrl}</p>
-                  )}
-
-                  <div className="flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-3 text-xs font-bold">
-                    <button
-                      onClick={() => handleModeratePost(post.id, 'approve')}
-                      className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-white hover:bg-emerald-700"
-                    >
-                      <CheckCircle className="h-3.5 w-3.5" />
-                      <span>Approve</span>
-                    </button>
-                    <button
-                      onClick={() => handleModeratePost(post.id, 'reject')}
-                      className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-1.5 text-rose-700 hover:bg-rose-100"
-                    >
-                      <Ban className="h-3.5 w-3.5" />
-                      <span>Reject</span>
-                    </button>
-                  </div>
                 </div>
               ))}
             </div>
