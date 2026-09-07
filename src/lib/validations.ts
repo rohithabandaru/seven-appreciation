@@ -3,7 +3,8 @@ import { z } from 'zod';
 const serverOrHttpUrl = z
   .string()
   .url('Invalid URL')
-  .or(z.string().regex(/^\/uploads\/\S+$/, 'Invalid image URL'));
+  .or(z.string().regex(/^\/uploads\/\S+$/, 'Invalid image URL'))
+  .or(z.string().regex(/^\/images\/members\/\S+$/, 'Invalid image URL'));
 
 export const registerSchema = z.object({
   email: z.string().email('Invalid email address'),

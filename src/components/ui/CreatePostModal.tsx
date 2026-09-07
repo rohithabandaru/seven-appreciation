@@ -16,7 +16,6 @@ import {
 import { useSession } from 'next-auth/react';
 import { MEMBERS_DATA } from '@/lib/data/membersData';
 import { checkContentModeration } from '@/lib/moderation';
-import { uploadFile, validateFileClient } from '@/lib/upload/client';
 import { Post, PostCategory, MemberSlug } from '@/types';
 
 interface CreatePostModalProps {
@@ -71,42 +70,9 @@ export default function CreatePostModal({
   const [selectedMember, setSelectedMember] = useState<string>(defaultMemberId === 'all' ? 'none' : defaultMemberId);
   const [title, setTitle] = useState(defaultTitle);
   const [content, setContent] = useState(defaultContent);
-  const [imageUrl, setImageUrl] = useState('');
   const [authorName] = useState(session?.user?.name || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [moderationError, setModerationError] = useState<string | null>(null);
-
-  // File upload state
-  const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file');
-  const [uploadedFileName, setUploadedFileName] = useState('');
-
-  const [isUploading, setIsUploading] = useState(false);
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const clientCheck = validateFileClient(file, 5 * 1024 * 1024);
-    if (!clientCheck.valid) {
-      setModerationError(clientCheck.error || 'Please select a valid image file (under 5MB).');
-      return;
-    }
-
-    setUploadedFileName(file.name);
-    setIsUploading(true);
-    setModerationError(null);
-
-    try {
-      const result = await uploadFile(file, 'post-image');
-      setImageUrl(result.url);
-      setModerationError(null);
-    } catch (err) {
-      setUploadedFileName('');
-      setModerationError(err instanceof Error ? err.message : 'Could not upload image. Please try again.');
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
   const handleContentChange = (val: string) => {
     setContent(val);
@@ -150,7 +116,6 @@ export default function CreatePostModal({
         title: title.trim() || (category === 'Appreciation' ? 'Heartfelt Note' : 'Community Share'),
         content: content.trim(),
         memberId: selectedMember !== 'none' ? selectedMember : null,
-        imageUrl: (imageUrl.startsWith('http') || imageUrl.startsWith('/uploads/')) ? imageUrl : undefined,
       };
 
       const res = await fetch('/api/posts', {
@@ -181,7 +146,7 @@ export default function CreatePostModal({
         category,
         title: payload.title as string,
         content: content.trim(),
-        imageUrl: (imageUrl.startsWith('http') || imageUrl.startsWith('/uploads/')) ? imageUrl : undefined,
+        imageUrl: undefined,
         status: 'approved',
         likesCount: 0,
         likedBy: [],
@@ -341,87 +306,6 @@ export default function CreatePostModal({
             />
           </div>
 
-          {/* 5. Optional Image / Link */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 mb-1.5">
-              5. Add an Image <span className="text-[11px] font-normal text-zinc-400">(Optional fan art / photo)</span>
-            </label>
-
-            <div className="flex rounded-2xl bg-zinc-100 p-1 gap-1 mb-2">
-              <button
-                type="button"
-                onClick={() => { setUploadMode('file'); setImageUrl(''); setUploadedFileName(''); }}
-                className={`flex-1 flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${uploadMode === 'file'
-                    ? 'bg-white text-rose-600 shadow-sm'
-                    : 'text-zinc-500 hover:text-zinc-700'
-                  }`}
-              >
-                <ImageIcon className="h-4 w-4" />
-                <span>Upload from Computer</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => { setUploadMode('url'); setImageUrl(''); setUploadedFileName(''); }}
-                className={`flex-1 flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${uploadMode === 'url'
-                    ? 'bg-white text-rose-600 shadow-sm'
-                    : 'text-zinc-500 hover:text-zinc-700'
-                  }`}
-              >
-                <BookOpen className="h-4 w-4" />
-                <span>Paste Image URL</span>
-              </button>
-            </div>
-
-            {uploadMode === 'file' && (
-              <label
-                htmlFor="post-file-upload"
-                className={`flex flex-col items-center justify-center w-full rounded-2xl border-2 border-dashed p-4 cursor-pointer transition-all ${imageUrl
-                    ? 'border-green-300 bg-green-50/50'
-                    : 'border-zinc-300 bg-zinc-50/50 hover:border-rose-400 hover:bg-rose-50/30'
-                  }`}
-              >
-                {imageUrl ? (
-                  <div className="flex flex-col items-center gap-1 text-center">
-                    <span className="text-sm font-bold text-green-700">Image Selected!</span>
-                    <span className="text-xs text-zinc-500 truncate max-w-[280px]">{uploadedFileName}</span>
-                    <span className="text-[11px] text-rose-500 font-semibold mt-1">Click to change</span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2 text-center">
-                    <ImageIcon className="h-6 w-6 text-rose-500" />
-                    <div>
-                      <span className="text-xs font-bold text-zinc-700 block">Click to browse files</span>
-                      <span className="text-[10px] text-zinc-400 block">Supports JPG, PNG, GIF, WebP • Max 4MB</span>
-                    </div>
-                  </div>
-                )}
-                <input
-                  id="post-file-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-              </label>
-            )}
-
-            {uploadMode === 'url' && (
-              <input
-                type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://images.unsplash.com/... or image link"
-                className="w-full rounded-2xl border border-zinc-200 bg-zinc-50/50 p-3 text-sm text-zinc-900 outline-none focus:border-rose-500 focus:bg-white focus:ring-1 focus:ring-rose-500 transition-all"
-              />
-            )}
-
-            {imageUrl && (
-              <div className="mt-2 relative aspect-video w-full max-h-40 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 flex items-center justify-center">
-                <Image src={imageUrl} alt="Preview" width={640} height={360} unoptimized className="max-h-full max-w-full object-contain" />
-              </div>
-            )}
-          </div>
-
           {/* Moderation / Auth Error Alert */}
           {moderationError && (
             <div className="flex items-start gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-800 animate-in fade-in">
@@ -458,11 +342,11 @@ export default function CreatePostModal({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !content.trim() || isUploading}
+              disabled={isSubmitting || !content.trim()}
               className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 via-rose-600 to-amber-500 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-rose-200 transition-all hover:scale-102 hover:shadow-lg hover:shadow-rose-300 disabled:opacity-50 disabled:hover:scale-100"
             >
-              {(isSubmitting || isUploading) && <Loader2 className="h-4 w-4 animate-spin" />}
-              <span>{isUploading ? 'Uploading...' : 'Publish Post'}</span>
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              <span>Publish Post</span>
             </button>
           </div>
         </form>

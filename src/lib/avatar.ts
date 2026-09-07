@@ -27,7 +27,7 @@ const UNSPLASH_HOST = 'images.unsplash.com';
 
 export function isRealUserImage(image: string | null | undefined): boolean {
   if (!image) return false;
-  if (image.startsWith('/images/members/')) return false;
+  if (image.startsWith('/images/members/')) return true;
   try {
     const url = new URL(image);
     if (url.hostname === UNSPLASH_HOST) return false;

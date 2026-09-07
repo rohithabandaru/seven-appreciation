@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Photocard } from '@/lib/data/photocardsData';
+import { PHOTOCARDS_DATA, Photocard } from '@/lib/data/photocardsData';
 import Photocard3D from './Photocard3D';
 import { Sparkles, Gift, X, CheckCircle2, ArrowRight, AlertTriangle } from 'lucide-react';
 
@@ -121,7 +121,7 @@ export default function PackOpeningModal({ isOpen, onClose, onCardsUnlocked }: P
             </div>
 
             <p className="text-xs text-zinc-400">
-              Each pack contains 2 random cards — up to 3 packs per day. Collect all 38 cards to complete your binder!
+              Each pack contains 2 random cards — up to 3 packs per day. Collect all {PHOTOCARDS_DATA.length} cards to complete your binder!
             </p>
           </div>
         )}
