@@ -4,6 +4,7 @@ import React, { useState, useEffect, use } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import UserAvatar from '@/components/ui/UserAvatar';
+import SocialShare from '@/components/ui/SocialShare';
 import { useSession } from 'next-auth/react';
 import { notFound } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
@@ -475,6 +476,17 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
               <ArrowLeft className="h-3.5 w-3.5" />
               <span>Back to All Members</span>
             </Link>
+
+            <div className="flex items-center justify-between">
+              <div className="bg-white/60 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-2 text-xs font-semibold text-zinc-600 border border-zinc-200/70">
+                <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                <span>Share {member.displayName}&apos;s page</span>
+              </div>
+              <SocialShare
+                title={`Seven Appreciation • ${member.displayName}`}
+                description={`Celebrate ${member.displayName} of ENHYPEN with genuine appreciation. 💗`}
+              />
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
               {/* Member Image Card */}

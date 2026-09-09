@@ -157,6 +157,9 @@ export const RATE_LIMIT_POLICIES = {
 
   /** Photocard pack opens: 10 per 5 minutes per user (daily cap is separate) */
   pack: { windowMs: 5 * 60 * 1000, maxRequests: 10 },
+
+  /** Daily ENGENE Check-in: 5 attempts per 15 minutes per user */
+  dailyCheckIn: { windowMs: 15 * 60 * 1000, maxRequests: 5 },
 } as const;
 
 // ── Helper: apply rate limit and return 429 response ─────────────────────────

@@ -19,38 +19,74 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://seven-appreciation.vercel.app'),
-  title: "Seven Appreciation — Support Without Attacking Anyone Else",
+  title: {
+    default: "Seven Appreciation — Support Without Attacking Anyone Else",
+    template: "%s • Seven Appreciation",
+  },
   description:
     "A peaceful digital sanctuary to celebrate the journeys, artistry, and inspirational impact of Heeseung, Jay, Jake, Sunghoon, Sunoo, Jungwon, and Ni-ki with genuine appreciation. No competition, no fan wars, no rankings.",
+  applicationName: "Seven Appreciation",
+  authors: [{ name: "Seven Appreciation Community" }],
+  creator: "Seven Appreciation Community",
+  publisher: "Seven Appreciation Community",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   manifest: "/manifest.json",
   alternates: {
     canonical: "/",
   },
   openGraph: {
+    type: "website",
     title: "Seven Appreciation — Support Without Attacking Anyone Else",
     description:
-      "A peaceful digital sanctuary to celebrate the journeys, artistry, and inspirational impact of HEESEUNG, JAY, JAKE, SUNGHOON, SUNOO, JUNGWON, and NI-KI with genuine appreciation.",
+      "A peaceful digital sanctuary to celebrate the journeys, artistry, and inspirational impact of HEESEUNG, JAY, JAKE, SUNGHOON, SUNOO, JUNGWON, and NI-KI with genuine appreciation. Share appreciation notes, fan stories, artworks, and more.",
     url: "/",
     siteName: "Seven Appreciation",
-    type: "website",
     locale: "en_US",
+    images: [
+      {
+        url: "/images/members/all_members.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Seven Appreciation — ENHYPEN Fan Community",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Seven Appreciation — Support Without Attacking Anyone Else",
     description:
       "A peaceful digital sanctuary to celebrate ENHYPEN with genuine appreciation. No competition, no fan wars, no rankings.",
+    images: ["/images/members/all_members.jpg"],
+    creator: "@SevenAppreciation",
+    site: "@SevenAppreciation",
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "SevenAppreciation",
   },
+  category: "Fan Community",
   keywords: [
+    "ENHYPEN",
+    "ENGENE",
+    "K-pop",
     "appreciation",
-    "support",
-    "community",
-    "positive",
+    "support without attacking",
+    "fan community",
+    "positive fandom",
+    "Kpop appreciation",
+    "fan art",
+    "fan stories",
     "Heeseung",
     "Jay",
     "Jake",
@@ -58,6 +94,9 @@ export const metadata: Metadata = {
     "Sunoo",
     "Jungwon",
     "Ni-ki",
+    "ENHYPEN appreciation",
+    "ENHYPEN fan site",
+    "ENGENE community",
   ],
 };
 

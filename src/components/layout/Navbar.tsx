@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import CreatePostModal from '@/components/ui/CreatePostModal';
 import InstallPWAButton from '@/components/ui/InstallPWAButton';
+import SocialShare from '@/components/ui/SocialShare';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -29,6 +30,7 @@ export default function Navbar() {
 
   const navLinks = [
     { href: '/', label: 'Feed', icon: Sparkles },
+    { href: '/community/engene-love', label: 'Daily Love 💌', icon: MessageSquareHeart },
     { href: '/live', label: 'Live Lounge', icon: Radio },
     { href: '/members', label: 'The Seven', icon: Users },
     { href: '/binder', label: 'Binder', icon: BookOpen },
@@ -74,6 +76,12 @@ export default function Navbar() {
           {/* Action Controls & Create Post Modal Trigger */}
           <div className="hidden items-center gap-2 xl:gap-3 lg:flex">
             <InstallPWAButton />
+
+            <SocialShare
+              title="Seven Appreciation – ENHYPEN Fan Community"
+              description="A peaceful digital sanctuary to celebrate ENHYPEN with genuine appreciation. No fan wars, no rankings, just love."
+              className="[&>button]:rounded-xl [&>button]:p-2 [&>button]:text-zinc-500 hover:[&>button]:bg-rose-50 hover:[&>button]:text-rose-600"
+            />
 
             <Link
               href="/search"
@@ -190,6 +198,12 @@ export default function Navbar() {
                 <Search className="h-4 w-4 text-zinc-400" />
                 <span>Search Community</span>
               </Link>
+
+              <SocialShare
+                title="Seven Appreciation – ENHYPEN Fan Community"
+                description="A peaceful digital sanctuary to celebrate ENHYPEN with genuine appreciation."
+                className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-zinc-700 hover:bg-rose-50 [&>button]:flex [&>button]:items-center [&>button]:gap-2 [&>button]:p-0 [&>button]:py-2.5 [&>button]:text-zinc-700 [&>button]:rounded-none [&>button]:hover:bg-transparent"
+              />
 
               <div className="mt-4 flex flex-col gap-2.5 border-t border-zinc-100 pt-4">
                 <div className="flex justify-center mb-1">

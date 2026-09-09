@@ -62,6 +62,10 @@ model User {
   appreciationLikes  AppreciationLike[]
   photoLikes         PhotoLike[]
   milestoneLikes     MilestoneLike[]
+
+  dailyCheckIns      DailyCheckIn[]
+  streak             UserStreak?
+  badges             UserBadge[]
 }
 
 model VerificationToken {
@@ -387,3 +391,62 @@ model UploadedFile {
   @@index([purpose])
   @@index([createdAt])
 }
+
+model DailyPrompt {
+  id        String         @id @default(cuid())
+  date      String         @unique // "YYYY-MM-DD" UTC
+  question  String         @db.Text
+  category  String         @default("APPRECIATION")
+  memberId  String?        // MemberSlug or null for OT7
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  checkIns  DailyCheckIn[]
+
+  @@index([date])
+  @@index([isActive])
+  @@index([memberId])
+}
+
+model DailyCheckIn {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promptId  String
+  prompt    DailyPrompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  message   String      @db.Text
+  status    String      @default("approved") // "approved", "pending", "flagged", "removed"
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@unique([userId, promptId])
+  @@index([promptId, status, createdAt])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model UserStreak {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStreak   Int      @default(0)
+  longestStreak   Int      @default(0)
+  lastCheckInDate String?  // "YYYY-MM-DD" UTC
+  totalCheckIns   Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeType String   // "FIRST_SPARK", "THREE_DAY_STREAK", "SEVEN_DAY_STREAK", "FOURTEEN_DAY_STREAK", "THIRTY_DAY_STREAK"
+  awardedAt DateTime @default(now())
+
+  @@unique([userId, badgeType])
+  @@index([userId])
+}
+

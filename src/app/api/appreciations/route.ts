@@ -56,18 +56,18 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
-
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = session?.user?.id || null;
+    const userName = session?.user?.name || 'Kind ENGENE';
+    const userAvatar = session?.user?.image || null;
 
     const ip = getClientIp(request as unknown as Request);
     const sizeError = await checkPayloadSize(request as unknown as Request);
     if (sizeError) return sizeError;
-    const rl = await checkRateLimit('appreciation:' + session.user.id, RATE_LIMIT_POLICIES.appreciation);
+    const rateLimitKey = userId ? `appreciation:${userId}` : `appreciation:ip:${ip}`;
+    const rl = await checkRateLimit(rateLimitKey, RATE_LIMIT_POLICIES.appreciation);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     const bodyResult = await readJsonBodySizeLimited<Record<string, unknown>>(request)
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
 
     const modResult = checkContentModeration(content);
     if (!modResult.isAllowed) {
-      logSecurityEvent({ event: 'moderation_blocked', ip, userId: session.user.id, detail: modResult.flagReason, endpoint: '/api/appreciations' });
+      logSecurityEvent({ event: 'moderation_blocked', ip, userId: userId || undefined, detail: modResult.flagReason, endpoint: '/api/appreciations' });
       return NextResponse.json({ error: modResult.guidanceMessage }, { status: 422 });
     }
 
@@ -90,21 +90,27 @@ export async function POST(request: Request) {
       data: {
         memberId,
         memberName: memberId,
-        userName: session.user.name || 'Kind Supporter',
-        userId: session.user.id,
-        userAvatar: session.user.image || null,
+        userName,
+        userId,
+        userAvatar,
         content: content.trim(),
         likesCount: 1
       }
     })
 
-    // Automatically like own post
-    await prisma.appreciationLike.create({
-      data: {
-        userId: session.user.id,
-        appreciationId: message.id
+    if (userId) {
+      // Automatically like own post if logged in
+      try {
+        await prisma.appreciationLike.create({
+          data: {
+            userId,
+            appreciationId: message.id
+          }
+        });
+      } catch {
+        // Ignore if like already exists
       }
-    });
+    }
 
     return NextResponse.json(message, { status: 201 })
   } catch (error) {

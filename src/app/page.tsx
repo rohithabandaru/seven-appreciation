@@ -10,6 +10,7 @@ import { PostCategory } from '@/types';
 import { Heart } from 'lucide-react';
 
 import SpotlightAndPrompt from '@/components/feed/SpotlightAndPrompt';
+import DailyEngeneSection from '@/components/daily/DailyEngeneSection';
 
 export default function Home() {
   const feed = useFeedPage('all');
@@ -23,6 +24,7 @@ export default function Home() {
   const header = (
     <div className="mb-3">
       <SpotlightAndPrompt onPromptClick={handlePromptClick} />
+      <DailyEngeneSection />
       <div className="py-3 text-center">
         <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-zinc-900 mb-2">
           Celebrate Their Artistry.{' '}

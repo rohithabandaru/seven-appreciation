@@ -7,11 +7,9 @@ import {
   Heart,
   MessageSquare,
   Bookmark,
-  Share2,
   ShieldAlert,
   Sparkles,
   Send,
-  Check,
   ChevronDown,
   ChevronUp,
   Trash2,
@@ -20,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Post, Comment } from '@/types';
 import UserAvatar from '@/components/ui/UserAvatar';
+import SocialShare from '@/components/ui/SocialShare';
 import { MEMBERS_DATA } from '@/lib/data/membersData';
 import { toggleSavedItem, isItemSaved } from '@/lib/storage';
 import { checkContentModeration } from '@/lib/moderation';
@@ -57,7 +56,6 @@ export default function UnifiedPostCard({
   const [isExpanded, setIsExpanded] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
-  const [copied, setCopied] = useState(false);
   const [isSaved, setIsSaved] = useState(() => isItemSaved('post', post.id));
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -101,21 +99,6 @@ export default function UnifiedPostCard({
   const displayContent = isLongContent && !isExpanded
     ? `${safeContent.slice(0, 280)}...`
     : safeContent;
-
-  const handleShare = () => {
-    if (typeof window !== 'undefined') {
-      navigator.clipboard.writeText(`${window.location.origin}/#${post.id}`);
-      setCopied(true);
-      if (onToast) {
-        onToast({
-          type: 'success',
-          title: 'Link Copied',
-          message: 'Post link copied to your clipboard!'
-        });
-      }
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
 
   const handleBookmarkToggle = () => {
     toggleSavedItem('post', post.id);
@@ -395,14 +378,13 @@ export default function UnifiedPostCard({
             <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-rose-500' : ''}`} />
           </button>
 
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-1 rounded-full p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 transition-colors cursor-pointer"
-            title="Share post"
-            aria-label="Share post"
-          >
-            {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Share2 className="h-4 w-4" />}
-          </button>
+          <SocialShare
+            title={post.title || `${post.userName}'s appreciation post`}
+            description={safeContent.slice(0, 160)}
+            url={`${typeof window !== 'undefined' ? window.location.origin : ''}/#${post.id}`}
+            direction="up"
+            className="[&>button]:p-2 [&>button]:text-zinc-500 hover:[&>button]:bg-zinc-100 hover:[&>button]:text-zinc-800"
+          />
         </div>
       </div>
 

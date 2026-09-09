@@ -26,7 +26,7 @@ export const updateProfileSchema = z.object({
 
 export const appreciationSchema = z.object({
   memberId: z.string().min(1, 'Member selection is required'),
-  content: z.string().min(10, 'Message must be at least 10 characters long').max(1000, 'Message is too long'),
+  content: z.string().min(2, 'Message must be at least 2 characters long').max(1000, 'Message is too long'),
 });
 
 export const postSchema = z.object({
@@ -94,3 +94,32 @@ export const liveMessageSchema = z.object({
     .min(1, 'Message cannot be empty')
     .max(500, 'Message is too long'),
 });
+
+export const dailyCheckInSchema = z.object({
+  promptId: z.string().min(1, 'Prompt ID is required'),
+  message: z
+    .string()
+    .min(1, 'Please write your response for today')
+    .max(750, 'Daily responses are limited to 750 characters'),
+});
+
+export const adminPromptSchema = z.object({
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be formatted as YYYY-MM-DD'),
+  question: z
+    .string()
+    .min(5, 'Question must be at least 5 characters')
+    .max(500, 'Question is too long'),
+  category: z.string().default('APPRECIATION'),
+  memberId: z.string().optional().nullable(),
+  isActive: z.boolean().default(true),
+});
+
+export const adminUpdatePromptSchema = z.object({
+  question: z.string().min(5, 'Question must be at least 5 characters').max(500, 'Question is too long').optional(),
+  category: z.string().optional(),
+  memberId: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
+});
+

@@ -17,10 +17,40 @@ import {
   Image as ImageIcon, 
   X, 
   Trophy, 
-  ArrowRight
+  ArrowRight,
+  Flame,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+
+interface StreakData {
+  currentStreak: number;
+  longestStreak: number;
+  lastCheckInDate: string | null;
+  totalCheckIns: number;
+}
+
+interface BadgeData {
+  id: string;
+  badgeType: string;
+  awardedAt: string;
+}
+
+const BADGE_ICONS: Record<string, string> = {
+  FIRST_SPARK: '✨',
+  THREE_DAY_STREAK: '🔥',
+  SEVEN_DAY_STREAK: '💎',
+  FOURTEEN_DAY_STREAK: '🌟',
+  THIRTY_DAY_STREAK: '👑',
+};
+
+const BADGE_NAMES: Record<string, string> = {
+  FIRST_SPARK: 'First Spark',
+  THREE_DAY_STREAK: '3-Day Flame',
+  SEVEN_DAY_STREAK: '7 Stars Bond',
+  FOURTEEN_DAY_STREAK: 'Fortnight',
+  THIRTY_DAY_STREAK: 'Solar Radiance',
+};
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
@@ -41,6 +71,10 @@ export default function ProfilePage() {
   const [toast, setToast] = useState<{ type: 'success' | 'warning' | 'error'; title: string; message: string } | null>(null);
 
   const [isUploading, setIsUploading] = useState(false);
+
+  // Streak & Badges state
+  const [streakData, setStreakData] = useState<StreakData | null>(null);
+  const [badgesData, setBadgesData] = useState<BadgeData[]>([]);
 
   function formatJoined(iso?: string): string {
     if (!iso) return 'Recently joined';
@@ -71,6 +105,17 @@ export default function ProfilePage() {
         setDisplayName(session?.user?.name || 'Supporter');
         setLoaded(true);
       });
+
+    // Fetch streak data
+    fetch('/api/daily/streak')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          setStreakData(data.streak);
+          setBadgesData(data.badges || []);
+        }
+      })
+      .catch(() => { /* ignore */ });
   }, [status, session?.user?.name, loaded]);
 
   const username = (session?.user?.email?.split('@')[0] || 'supporter').toLowerCase();
@@ -580,7 +625,71 @@ export default function ProfilePage() {
             </p>
           </Link>
 
+          {/* Card 3: Daily ENGENE Streak */}
+          <Link
+            href="/community/engene-love"
+            className="group rounded-3xl border border-amber-100 bg-white p-6 shadow-xs hover:shadow-md transition-all hover:-translate-y-1 space-y-3"
+          >
+            <div className="flex items-center justify-between">
+              <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-sm">
+                <Flame className="h-5 w-5" />
+              </div>
+              <ArrowRight className="h-4 w-4 text-zinc-400 group-hover:text-amber-500 group-hover:translate-x-1 transition-all" />
+            </div>
+            <h3 className="text-sm font-extrabold text-zinc-900">Daily ENGENE</h3>
+            <p className="text-xs text-zinc-500 leading-relaxed">
+              Check in daily, build your streak, and earn badges celebrating your ENGENE journey.
+            </p>
+          </Link>
+
         </div>
+
+        {/* DAILY ENGENE STREAK & BADGES */}
+        {streakData && (streakData.totalCheckIns > 0 || badgesData.length > 0) && (
+          <div className="rounded-3xl border border-amber-100 bg-gradient-to-br from-amber-50/60 via-white to-rose-50/40 p-6 sm:p-8 shadow-sm space-y-5">
+            <div className="flex items-center gap-2">
+              <Flame className="h-5 w-5 text-amber-500" />
+              <h2 className="text-base font-extrabold text-zinc-900">Daily ENGENE Stats</h2>
+            </div>
+
+            {/* Streak Numbers */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="rounded-2xl border border-orange-100 bg-white p-4 text-center space-y-1">
+                <div className="text-2xl font-black text-orange-600">{streakData.currentStreak}</div>
+                <div className="text-[10px] font-bold text-zinc-500 uppercase">Current Streak</div>
+              </div>
+              <div className="rounded-2xl border border-purple-100 bg-white p-4 text-center space-y-1">
+                <div className="text-2xl font-black text-purple-600">{streakData.longestStreak}</div>
+                <div className="text-[10px] font-bold text-zinc-500 uppercase">Best Streak</div>
+              </div>
+              <div className="rounded-2xl border border-zinc-100 bg-white p-4 text-center space-y-1">
+                <div className="text-2xl font-black text-zinc-700">{streakData.totalCheckIns}</div>
+                <div className="text-[10px] font-bold text-zinc-500 uppercase">Total Check-ins</div>
+              </div>
+            </div>
+
+            {/* Badges */}
+            {badgesData.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-xs font-bold text-zinc-600 uppercase">Earned Badges</h3>
+                <div className="flex flex-wrap gap-2">
+                  {badgesData.map((badge) => (
+                    <div
+                      key={badge.id}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-white border border-amber-200 px-3 py-1.5 shadow-2xs"
+                      title={BADGE_NAMES[badge.badgeType] || badge.badgeType}
+                    >
+                      <span className="text-base">{BADGE_ICONS[badge.badgeType] || '🏅'}</span>
+                      <span className="text-[11px] font-bold text-zinc-700">
+                        {BADGE_NAMES[badge.badgeType] || badge.badgeType}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
       <Footer />

@@ -253,3 +253,73 @@ export interface UpcomingBirthday {
   daysUntil: number;
   turningAge: number;
 }
+
+export interface DailyPrompt {
+  id: string;
+  date: string;
+  question: string;
+  category: string;
+  memberId: MemberSlug | null;
+  isActive: boolean;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  checkInsCount?: number;
+}
+
+export interface DailyCheckIn {
+  id: string;
+  userId: string;
+  promptId: string;
+  message: string;
+  status: 'approved' | 'pending' | 'flagged' | 'removed';
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  user?: {
+    name?: string | null;
+    image?: string | null;
+  };
+}
+
+export interface UserStreak {
+  id: string;
+  userId: string;
+  currentStreak: number;
+  longestStreak: number;
+  lastCheckInDate: string | null;
+  totalCheckIns: number;
+}
+
+export type BadgeType =
+  | 'FIRST_SPARK'
+  | 'THREE_DAY_STREAK'
+  | 'SEVEN_DAY_STREAK'
+  | 'FOURTEEN_DAY_STREAK'
+  | 'THIRTY_DAY_STREAK';
+
+export interface UserBadge {
+  id: string;
+  userId: string;
+  badgeType: BadgeType;
+  awardedAt: string | Date;
+}
+
+export interface BadgeDefinition {
+  type: BadgeType;
+  name: string;
+  description: string;
+  icon: string;
+  thresholdDays: number;
+  category: 'spark' | 'streak';
+}
+
+export interface RandomEngeneLove {
+  id: string;
+  memberId: string | null;
+  memberName: string;
+  userName: string;
+  userAvatar: string | null;
+  content: string;
+  likesCount: number;
+  createdAt: string | Date;
+}
+
