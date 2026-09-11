@@ -123,6 +123,12 @@ export default function RootLayout({
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5401075281300328"
           crossOrigin="anonymous"
         />
+
+        {/* Google AdSense verification */}
+        <meta
+          name="google-adsense-account"
+          content="ca-pub-5401075281300328"
+        />
       </head>
 
       <body className="min-h-full flex flex-col bg-[#FFFDF9] text-zinc-900 dark:bg-[#121014] dark:text-zinc-100">
