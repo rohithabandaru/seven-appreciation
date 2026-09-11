@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import AuthProvider from "@/components/providers/AuthProvider";
 import RegisterPWA from "@/components/providers/RegisterPWA";
@@ -18,7 +19,10 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://seven-appreciation.vercel.app'),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ||
+      "https://seven-appreciation.vercel.app"
+  ),
   title: {
     default: "Seven Appreciation — Support Without Attacking Anyone Else",
     template: "%s • Seven Appreciation",
@@ -100,27 +104,50 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" className={`${outfit.variable} ${outfit.className} h-full antialiased`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${outfit.variable} ${outfit.className} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <head>
+        {/* Google AdSense */}
+        <Script
+          async
+          strategy="beforeInteractive"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5401075281300328"
+          crossOrigin="anonymous"
+        />
+      </head>
+
       <body className="min-h-full flex flex-col bg-[#FFFDF9] text-zinc-900 dark:bg-[#121014] dark:text-zinc-100">
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('seven_prefs');var theme=t?JSON.parse(t).theme:null;if(theme==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();`
+            __html: `(function(){try{var t=localStorage.getItem('seven_prefs');var theme=t?JSON.parse(t).theme:null;if(theme==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();`,
           }}
         />
-        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-white focus:text-rose-600 focus:font-bold rounded-br-lg shadow-md">
+
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-white focus:text-rose-600 focus:font-bold rounded-br-lg shadow-md"
+        >
           Skip to main content
         </a>
+
         <AuthProvider>
           <RegisterPWA />
           <VisitTracker />
           <FloatingCoffee />
           {children}
         </AuthProvider>
+
         <Analytics />
       </body>
     </html>
   );
 }
-
