@@ -116,14 +116,6 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* Google AdSense */}
-        <Script
-          async
-          strategy="beforeInteractive"
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5401075281300328"
-          crossOrigin="anonymous"
-        />
-
         {/* Google AdSense verification */}
         <meta
           name="google-adsense-account"
@@ -153,6 +145,14 @@ export default function RootLayout({
         </AuthProvider>
 
         <Analytics />
+
+        {/* Google AdSense — loaded after hydration so it doesn't block page render */}
+        <Script
+          async
+          strategy="afterInteractive"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5401075281300328"
+          crossOrigin="anonymous"
+        />
       </body>
     </html>
   );

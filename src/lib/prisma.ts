@@ -18,8 +18,11 @@ export const prisma =
       connectionString: connStr,
       ssl: { rejectUnauthorized: true },
       max: 10,
+      min: 2, // Keep 2 warm connections ready
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
+      keepAlive: true,               // Prevent connections from going stale
+      keepAliveInitialDelayMillis: 10000,
     });
     if (!globalForPrisma.pool) globalForPrisma.pool = pool;
     const adapter = new PrismaPg(pool);

@@ -35,6 +35,8 @@ export function useFeedPage(initialCategory: string = 'all') {
 
   const { data, error, size, setSize, mutate } = useSWRInfinite(getKey, fetcher, {
     revalidateFirstPage: false,
+    dedupingInterval: 10000, // Prevent duplicate requests within 10s
+    keepPreviousData: true,  // Don't flash empty state when filters change
   });
 
   const posts: Post[] = data ? data.flatMap((page) => page.data || []) : [];

@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     const type = searchParams.get('type');
     const q = searchParams.get('q')?.trim();
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50', 10)));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '10', 10)));
     const skip = (page - 1) * limit;
 
     const whereClause: Prisma.PostWhereInput = { status: 'approved' };
@@ -48,10 +48,9 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    const session = await getServerSession(authOptions);
-    const userId = session?.user?.id;
-
-    const [posts, total] = await Promise.all([
+    // Phase 1: Fire posts + count + session all in parallel
+    // Session is only needed for the likedBy field, so no need to wait for it before querying posts
+    const [postsResult, total, session] = await Promise.all([
       prisma.post.findMany({
         where: whereClause,
         orderBy: { createdAt: 'desc' },
@@ -65,21 +64,38 @@ export async function GET(req: NextRequest) {
         }
       }),
       prisma.post.count({ where: whereClause }),
+      getServerSession(authOptions),
     ]);
 
-    // Fetch latest 3 comments (preview) for each post in this page
+    const posts = postsResult;
+    const userId = session?.user?.id;
     const postIds = posts.map((p) => p.id);
-    const previewComments = postIds.length > 0
-      ? await prisma.comment.findMany({
-          where: { postId: { in: postIds } },
-          orderBy: { createdAt: 'desc' },
-          take: postIds.length * 3,
-          include: {
-            user: { select: { name: true, image: true } },
-          },
+
+    // Phase 2: Fetch comments and likes in parallel (both depend only on postIds from phase 1)
+    const fetchComments = () => prisma.comment.findMany({
+      where: { postId: { in: postIds } },
+      orderBy: { createdAt: 'desc' as const },
+      take: limit * 3, // At most 3 per post
+      include: {
+        user: { select: { name: true, image: true } },
+      },
+    });
+    type CommentWithUser = Awaited<ReturnType<typeof fetchComments>>[number];
+
+    const commentsPromise: Promise<CommentWithUser[]> = postIds.length > 0
+      ? fetchComments()
+      : Promise.resolve([]);
+
+    const likesPromise: Promise<{ postId: string }[]> = userId && postIds.length > 0
+      ? prisma.postLike.findMany({
+          where: { userId, postId: { in: postIds } },
+          select: { postId: true },
         })
-      : [];
-    const commentsByPost = new Map<string, typeof previewComments>();
+      : Promise.resolve([]);
+
+    const [previewComments, userLikes] = await Promise.all([commentsPromise, likesPromise]);
+
+    const commentsByPost = new Map<string, CommentWithUser[]>();
     for (const c of previewComments) {
       if (!commentsByPost.has(c.postId)) {
         commentsByPost.set(c.postId, []);
@@ -89,14 +105,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    let userLikedPostIds: Set<string> = new Set();
-    if (userId) {
-      const userLikes = await prisma.postLike.findMany({
-        where: { userId, postId: { in: postIds } },
-        select: { postId: true },
-      });
-      userLikedPostIds = new Set(userLikes.map((l) => l.postId));
-    }
+    const userLikedPostIds = new Set(userLikes.map((l) => l.postId));
 
     const mapped = posts.map((p) => {
       const previews = commentsByPost.get(p.id) || [];
@@ -131,7 +140,14 @@ export async function GET(req: NextRequest) {
     return new NextResponse(JSON.stringify({
       data: mapped,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    }), { status: 200 });
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        // CDN: cache 10s, serve stale up to 30s while revalidating in background
+        'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
+      },
+    });
   } catch (error) {
     console.error("Failed to fetch posts:", error);
     return new NextResponse(JSON.stringify({ error: "Internal Server Error" }), { status: 500 });
