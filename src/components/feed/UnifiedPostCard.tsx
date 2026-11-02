@@ -63,6 +63,7 @@ export default function UnifiedPostCard({
   const [imageError, setImageError] = useState(false);
   const [allComments, setAllComments] = useState<Comment[] | null>(null);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [animatingHeart, setAnimatingHeart] = useState(false);
 
   // Comments shown: preview (from post.comments) unless all have been lazily loaded
   const displayedComments = allComments ?? post.comments ?? [];
@@ -179,22 +180,22 @@ export default function UnifiedPostCard({
   const getCategoryBadgeClass = (category: string) => {
     switch (category?.toLowerCase()) {
       case 'appreciation':
-        return 'bg-rose-50 text-rose-700 border-rose-200/80';
+        return 'bg-rose-50 text-rose-700 border-rose-200/80 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-900/60';
       case 'story':
-        return 'bg-amber-50 text-amber-700 border-amber-200/80';
+        return 'bg-amber-50 text-amber-700 border-amber-200/80 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900/60';
       case 'artwork':
-        return 'bg-purple-50 text-purple-700 border-purple-200/80';
+        return 'bg-purple-50 text-purple-700 border-purple-200/80 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-900/60';
       case 'achievement':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200/80';
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200/80 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900/60';
       default:
-        return 'bg-zinc-100 text-zinc-700 border-zinc-200';
+        return 'bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700';
     }
   };
 
   return (
     <article
       id={post.id}
-      className="group relative overflow-hidden rounded-3xl border border-rose-100/70 bg-white/90 p-5 sm:p-6 shadow-sm backdrop-blur-md transition-all hover:shadow-md hover:border-rose-200"
+      className="group relative overflow-hidden rounded-3xl border border-rose-100/70 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/90 p-5 sm:p-6 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-xl hover:shadow-rose-500/5 hover:-translate-y-0.5 hover:border-rose-200 dark:hover:border-rose-900/60"
     >
       {/* Top Header: Author & Recipient & Category & Options */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -202,14 +203,14 @@ export default function UnifiedPostCard({
           <UserAvatar name={post.userName} image={post.userAvatar} size={42} />
           <div>
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-sm font-bold text-zinc-900">{post.userName}</span>
+              <span className="text-sm font-bold text-zinc-900 dark:text-white">{post.userName}</span>
               {isPostAuthor && (
-                <span className="rounded-md bg-rose-100 px-1.5 py-0.2 text-[10px] font-bold text-rose-700">
+                <span className="rounded-md bg-rose-100 dark:bg-rose-950/60 px-1.5 py-0.2 text-[10px] font-bold text-rose-700 dark:text-rose-300">
                   You
                 </span>
               )}
-              <span className="text-xs text-zinc-400">•</span>
-              <span className="text-xs text-zinc-500">
+              <span className="text-xs text-zinc-400 dark:text-zinc-500">•</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
                 {new Date(post.createdAt).toLocaleDateString(undefined, {
                   month: 'short',
                   day: 'numeric'
@@ -221,13 +222,13 @@ export default function UnifiedPostCard({
             {memberObj ? (
               <Link
                 href={`/members/${memberObj.slug}`}
-                className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline"
+                className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:underline"
               >
                 <Sparkles className="h-3 w-3 text-amber-500" />
                 <span>Dedicated to {memberObj.displayName}</span>
               </Link>
             ) : (
-              <span className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50/80 px-2 py-0.5 rounded-md border border-amber-100">
+              <span className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-300 bg-amber-50/80 dark:bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-100 dark:border-amber-900/50">
                 <Sparkles className="h-3 w-3 text-amber-500" />
                 <span>General / All Seven</span>
               </span>
@@ -245,7 +246,7 @@ export default function UnifiedPostCard({
           {canDeletePost && (
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="rounded-full p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+              className="rounded-full p-1.5 text-zinc-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 transition-colors"
               title="Delete post"
               aria-label="Delete post"
             >
@@ -257,7 +258,7 @@ export default function UnifiedPostCard({
           {onReport && (
             <button
               onClick={() => onReport(post.id, post.title || post.content)}
-              className="rounded-full p-1.5 text-zinc-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+              className="rounded-full p-1.5 text-zinc-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
               title="Report content"
               aria-label="Report content"
             >
@@ -269,16 +270,16 @@ export default function UnifiedPostCard({
 
       {/* Delete Confirmation Banner */}
       {showDeleteConfirm && (
-        <div className="mb-4 flex items-center justify-between rounded-2xl border border-red-200 bg-red-50/90 p-3 text-xs animate-in fade-in">
-          <div className="flex items-center gap-2 text-red-800 font-medium">
-            <AlertTriangle className="h-4 w-4 flex-shrink-0 text-red-600" />
+        <div className="mb-4 flex items-center justify-between rounded-2xl border border-red-200 dark:border-red-900/60 bg-red-50/90 dark:bg-red-950/80 p-3 text-xs animate-in fade-in">
+          <div className="flex items-center gap-2 text-red-800 dark:text-red-200 font-medium">
+            <AlertTriangle className="h-4 w-4 flex-shrink-0 text-red-600 dark:text-red-400" />
             <span>Are you sure you want to delete this post? This cannot be undone.</span>
           </div>
           <div className="flex items-center gap-2 ml-2 flex-shrink-0">
             <button
               onClick={() => setShowDeleteConfirm(false)}
               disabled={isDeleting}
-              className="rounded-lg px-2.5 py-1 font-bold text-zinc-600 hover:bg-zinc-200/60 transition-colors"
+              className="rounded-lg px-2.5 py-1 font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition-colors"
             >
               Cancel
             </button>
@@ -297,19 +298,19 @@ export default function UnifiedPostCard({
       {/* Main Content */}
       <div className="space-y-2.5">
         {post.title && post.title !== 'Heartfelt Note' && post.title !== 'Community Share' && (
-          <h3 className="text-lg sm:text-xl font-bold tracking-tight text-zinc-900 leading-snug">
+          <h3 className="text-lg sm:text-xl font-bold tracking-tight text-zinc-900 dark:text-white leading-snug">
             {post.title}
           </h3>
         )}
 
-        <div className="text-sm sm:text-base text-zinc-700 leading-relaxed whitespace-pre-line">
+        <div className="text-sm sm:text-base text-zinc-800 dark:text-white leading-relaxed whitespace-pre-line">
           {displayContent}
         </div>
 
         {isLongContent && (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 pt-1"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 pt-1"
           >
             <span>{isExpanded ? 'Show less' : 'Read full story'}</span>
             {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
@@ -338,29 +339,33 @@ export default function UnifiedPostCard({
       )}
 
       {/* Interactive Action Footer */}
-      <div className="mt-5 flex items-center justify-between border-t border-rose-100/60 pt-4 text-xs font-semibold text-zinc-600">
+      <div className="mt-5 flex items-center justify-between border-t border-rose-100/60 dark:border-zinc-800 pt-4 text-xs font-semibold text-zinc-600 dark:text-zinc-400">
         <div className="flex items-center gap-2 sm:gap-4">
           {/* Like Button */}
           <button
-            onClick={() => onLike && onLike(post.id)}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all cursor-pointer ${isLiked
-                ? 'bg-rose-50 text-rose-600 shadow-xs scale-105 font-bold'
-                : 'hover:bg-rose-50/70 hover:text-rose-600'
+            onClick={() => {
+              setAnimatingHeart(true);
+              setTimeout(() => setAnimatingHeart(false), 500);
+              if (onLike) onLike(post.id);
+            }}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all duration-200 cursor-pointer active:scale-90 ${isLiked
+              ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 shadow-xs scale-102 font-bold ring-1 ring-rose-200 dark:ring-rose-900/60'
+              : 'hover:bg-rose-50/70 dark:hover:bg-zinc-800 hover:text-rose-600 dark:hover:text-rose-400'
               }`}
             aria-label={isLiked ? "Unlike post" : "Like post"}
           >
-            <Heart className={`h-4 w-4 transition-transform active:scale-125 ${isLiked ? 'fill-rose-500 text-rose-500' : ''}`} />
+            <Heart className={`h-4 w-4 transition-transform ${animatingHeart ? 'animate-heart-pop' : ''} ${isLiked ? 'fill-rose-500 text-rose-500' : ''}`} />
             <span>{post.likesCount || 0}</span>
           </button>
 
           {/* Comments / Replies Toggle */}
           <button
             onClick={() => setShowComments(!showComments)}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors cursor-pointer ${showComments ? 'bg-amber-50 text-amber-700 font-bold' : 'hover:bg-zinc-100 hover:text-zinc-900'
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors cursor-pointer active:scale-95 ${showComments ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 font-bold' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'
               }`}
             aria-label={showComments ? "Hide replies" : "Show replies"}
           >
-            <MessageSquare className="h-4 w-4 text-zinc-500" />
+            <MessageSquare className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
             <span>{post.comments?.length || post.commentsCount || 0}</span>
             <span className="hidden sm:inline">Replies</span>
           </button>
@@ -370,7 +375,7 @@ export default function UnifiedPostCard({
         <div className="flex items-center gap-1.5">
           <button
             onClick={handleBookmarkToggle}
-            className={`rounded-full p-2 transition-colors cursor-pointer ${isSaved ? 'bg-rose-50 text-rose-600' : 'hover:bg-zinc-100 text-zinc-500 hover:text-zinc-800'
+            className={`rounded-full p-2 transition-all duration-200 cursor-pointer active:scale-90 ${isSaved ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 ring-1 ring-rose-200 dark:ring-rose-900/60' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
               }`}
             title="Save post"
             aria-label={isSaved ? "Remove from saved" : "Save post"}
@@ -383,14 +388,14 @@ export default function UnifiedPostCard({
             description={safeContent.slice(0, 160)}
             url={`${typeof window !== 'undefined' ? window.location.origin : ''}/#${post.id}`}
             direction="up"
-            className="[&>button]:p-2 [&>button]:text-zinc-500 hover:[&>button]:bg-zinc-100 hover:[&>button]:text-zinc-800"
+            className="[&>button]:p-2 [&>button]:text-zinc-500 dark:[&>button]:text-zinc-400 hover:[&>button]:bg-zinc-100 dark:hover:[&>button]:bg-zinc-800 hover:[&>button]:text-zinc-800 dark:hover:[&>button]:text-zinc-200"
           />
         </div>
       </div>
 
       {/* Inline Comments / Replies Section */}
       {showComments && (
-        <div className="mt-4 space-y-4 border-t border-zinc-100 pt-4 animate-in fade-in duration-200">
+        <div className="mt-4 space-y-4 border-t border-zinc-100 dark:border-zinc-800 pt-4 animate-in fade-in duration-200">
           {/* Add Reply Input Box */}
           <form onSubmit={handleCommentSubmit} className="flex items-center gap-2.5">
             <UserAvatar
@@ -405,7 +410,7 @@ export default function UnifiedPostCard({
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="Post your reply..."
-                className="w-full rounded-2xl border border-zinc-200 bg-zinc-50/70 px-4 py-2.5 pr-10 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-rose-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-rose-400"
+                className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-800/80 px-4 py-2.5 pr-10 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:border-rose-400 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none focus:ring-1 focus:ring-rose-400"
               />
               <button
                 type="submit"
@@ -429,19 +434,19 @@ export default function UnifiedPostCard({
                   const isThisCommentDeleting = deletingCommentId === comment.id;
 
                   return (
-                    <div key={comment.id} className="group/reply relative flex gap-3 rounded-2xl bg-zinc-50/90 p-3.5 text-xs transition-colors hover:bg-rose-50/30 border border-zinc-100">
+                    <div key={comment.id} className="group/reply relative flex gap-3 rounded-2xl bg-zinc-50/90 dark:bg-zinc-800/70 p-3.5 text-xs transition-colors hover:bg-rose-50/30 dark:hover:bg-zinc-800 border border-zinc-100 dark:border-zinc-700/60">
                       <UserAvatar name={comment.userName} image={comment.userAvatar} size={30} className="flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-zinc-900">{comment.userName}</span>
+                            <span className="font-bold text-zinc-900 dark:text-white">{comment.userName}</span>
                             {isCommentAuthor && (
-                              <span className="rounded-sm bg-rose-100 px-1 text-[9px] font-bold text-rose-700">
+                              <span className="rounded-sm bg-rose-100 dark:bg-rose-950/60 px-1 text-[9px] font-bold text-rose-700 dark:text-rose-300">
                                 You
                               </span>
                             )}
-                            <span className="text-[10px] text-zinc-400">•</span>
-                            <span className="text-[10px] text-zinc-400">
+                            <span className="text-[10px] text-zinc-400 dark:text-zinc-500">•</span>
+                            <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
                               {new Date(comment.createdAt).toLocaleDateString(undefined, {
                                 month: 'short',
                                 day: 'numeric'
@@ -454,7 +459,7 @@ export default function UnifiedPostCard({
                             <button
                               onClick={() => handleDeleteCommentClick(comment.id)}
                               disabled={isThisCommentDeleting}
-                              className="opacity-0 group-hover/reply:opacity-100 text-zinc-400 hover:text-red-600 transition-all p-1 rounded-md hover:bg-red-50 cursor-pointer"
+                              className="opacity-0 group-hover/reply:opacity-100 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-all p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
                               title="Delete reply"
                               aria-label="Delete reply"
                             >
@@ -466,7 +471,7 @@ export default function UnifiedPostCard({
                             </button>
                           )}
                         </div>
-                        <p className="mt-1 text-zinc-700 leading-relaxed break-words">{comment.content}</p>
+                        <p className="mt-1 text-zinc-700 dark:text-zinc-100 leading-relaxed break-words">{comment.content}</p>
                       </div>
                     </div>
                   );
@@ -477,7 +482,7 @@ export default function UnifiedPostCard({
                   <button
                     onClick={handleLoadAllComments}
                     disabled={loadingComments}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-amber-300 bg-amber-50/50 py-2 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-colors cursor-pointer"
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-amber-300 dark:border-amber-700/60 bg-amber-50/50 dark:bg-amber-950/30 py-2 text-xs font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/50 transition-colors cursor-pointer"
                   >
                     {loadingComments ? (
                       <>
@@ -494,7 +499,7 @@ export default function UnifiedPostCard({
                 )}
               </>
             ) : (
-              <p className="text-center text-xs text-zinc-400 py-3 italic">
+              <p className="text-center text-xs text-zinc-400 dark:text-zinc-500 py-3 italic">
                 No replies yet. Be the first to start the conversation!
               </p>
             )}

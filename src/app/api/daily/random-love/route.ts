@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     };
 
     // 1. Try to fetch from AppreciationMessage table
-    let count = await prisma.appreciationMessage.count({ where });
+    const count = await prisma.appreciationMessage.count({ where });
 
     if (count > 0) {
       const randomSkip = Math.floor(Math.random() * count);

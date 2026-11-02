@@ -104,7 +104,7 @@ describe('Zod Validation Schemas', () => {
     it('rejects content too short', () => {
       const result = appreciationSchema.safeParse({
         memberId: 'heeseung',
-        content: 'Hi',
+        content: 'H',
       });
       expect(result.success).toBe(false);
     });

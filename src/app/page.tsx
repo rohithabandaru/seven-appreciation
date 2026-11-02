@@ -11,6 +11,10 @@ import { Heart } from 'lucide-react';
 
 import SpotlightAndPrompt from '@/components/feed/SpotlightAndPrompt';
 import DailyEngeneSection from '@/components/daily/DailyEngeneSection';
+import HeroSection from '@/components/home/HeroSection';
+import SevenMembersSection from '@/components/home/SevenMembersSection';
+import SectionDivider from '@/components/home/SectionDivider';
+import AnimatedTicker from '@/components/home/AnimatedTicker';
 
 export default function Home() {
   const feed = useFeedPage('all');
@@ -18,22 +22,34 @@ export default function Home() {
 
   const handlePromptClick = (promptText: string) => {
     setActivePrompt(promptText);
-    window.scrollTo({ top: 400, behavior: 'smooth' });
+    const feedEl = document.getElementById('community-feed-top');
+    if (feedEl) {
+      feedEl.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const header = (
-    <div className="mb-3">
+    <div className="mb-4 space-y-4">
+      {/* Cinematic Hero Section */}
+      <HeroSection onOpenCreateModal={() => feed.setShowCreateModal(true)} />
+
+      {/* Infinite Glowing Animated Ticker */}
+      <AnimatedTicker />
+
+      {/* The Seven Members Showcase Section */}
+      <SevenMembersSection onFilterMember={(slug) => feed.setSelectedMember(slug as import('@/types').MemberSlug | 'all')} />
+
+      {/* Subtle Glowing Animated Divider */}
+      <SectionDivider label="Daily Inspiration & Member Spotlight" />
+
+      {/* Daily Member Spotlight & Prompt */}
       <SpotlightAndPrompt onPromptClick={handlePromptClick} />
+
+      {/* Daily Love Note Check-in */}
       <DailyEngeneSection />
-      <div className="py-3 text-center">
-        <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-zinc-900 mb-2">
-          Celebrate Their Artistry.{' '}
-          <span className="text-rose-500">Share Pure Love.</span>
-        </h1>
-        <p className="text-sm sm:text-base text-zinc-600 max-w-xl mx-auto">
-          A warm, positive community to share appreciation notes, fan stories, memories, and art celebrating all seven members with kindness and respect.
-        </p>
-      </div>
+
+      {/* Subtle Glowing Divider Leading into Feed */}
+      <SectionDivider label="Live Community Appreciation Wall" />
     </div>
   );
 

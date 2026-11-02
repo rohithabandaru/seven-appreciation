@@ -399,10 +399,12 @@ export default function ProfilePage() {
                       }`}
                     >
                       <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-white shadow-sm mb-2">
-                        <Image src={member.image} alt={member.displayName} width={64} height={64} className="h-full w-full object-cover" unoptimized />
+                        <Image src={member.image} alt={member.displayName} width={64} height={64} className="h-full w-full object-cover" style={{ objectPosition: member.imagePosition || 'center 18%' }} unoptimized />
                       </div>
                       <span className="text-xs font-bold text-zinc-800">{member.displayName}</span>
-                      <span className="text-[10px] text-rose-500 font-semibold">{member.role.split(',')[0]}</span>
+                      {member.role ? (
+                        <span className="text-[10px] text-rose-500 font-semibold">{member.role}</span>
+                      ) : null}
                     </button>
                   ))}
 

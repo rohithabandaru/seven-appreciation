@@ -170,30 +170,30 @@ export default function CreatePostModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/50 p-4 backdrop-blur-sm animate-in fade-in duration-200" role="dialog" aria-modal="true">
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-rose-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/70 p-4 backdrop-blur-sm animate-in fade-in duration-200" role="dialog" aria-modal="true">
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white dark:bg-zinc-900 p-6 sm:p-8 shadow-2xl border border-rose-100 dark:border-zinc-800">
 
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
+        <div className="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800">
           <div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-900 flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-900 dark:text-white flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-rose-500 fill-rose-400" />
               <span>Share Appreciation</span>
             </h2>
-            <p className="text-xs text-zinc-500 mt-0.5">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
               Share something kind and genuine.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
+            className="rounded-full p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {promptBanner && (
-          <div className="mt-4 rounded-2xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 font-semibold flex items-center gap-2">
+          <div className="mt-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/40 p-3 text-xs text-amber-800 dark:text-amber-200 font-semibold flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-amber-500 flex-shrink-0" />
             <span>Answering Prompt: &ldquo;{promptBanner}&rdquo;</span>
           </div>
@@ -202,7 +202,7 @@ export default function CreatePostModal({
         <form onSubmit={handleSubmit} className="mt-5 space-y-5">
           {/* 1. Category Selection Tabs */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 mb-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-2">
               1. What would you like to share?
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -215,8 +215,8 @@ export default function CreatePostModal({
                     key={cat.id}
                     onClick={() => setCategory(cat.id)}
                     className={`flex flex-col items-center justify-center rounded-2xl p-3 text-center border transition-all ${isSelected
-                        ? 'border-rose-500 bg-rose-50/70 text-rose-700 font-bold shadow-xs'
-                        : 'border-zinc-200/80 bg-white text-zinc-600 hover:border-rose-200 hover:bg-zinc-50'
+                        ? 'border-rose-500 bg-rose-50/70 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 font-bold shadow-xs'
+                        : 'border-zinc-200/80 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:border-rose-200 hover:bg-zinc-50 dark:hover:bg-zinc-750'
                       }`}
                   >
                     <Icon className={`h-5 w-5 mb-1.5 ${isSelected ? 'text-rose-500' : 'text-zinc-400'}`} />
@@ -229,7 +229,7 @@ export default function CreatePostModal({
 
           {/* 2. Recipient / Dedication */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 mb-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-2">
               2. Dedicate To
             </label>
             <div className="flex flex-wrap gap-2">
@@ -238,7 +238,7 @@ export default function CreatePostModal({
                 onClick={() => setSelectedMember('none')}
                 className={`rounded-xl px-3.5 py-2 text-xs font-bold border transition-all ${selectedMember === 'none'
                     ? 'border-rose-500 bg-rose-500 text-white shadow-xs'
-                    : 'border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100'
+                    : 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-750'
                   }`}
               >
                 ✨ General / All Seven (No Tag)
@@ -249,11 +249,11 @@ export default function CreatePostModal({
                   key={member.slug}
                   onClick={() => setSelectedMember(member.slug)}
                   className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold border transition-all ${selectedMember === member.slug
-                      ? 'border-rose-500 bg-rose-50 text-rose-700 font-bold ring-1 ring-rose-500'
-                      : 'border-zinc-200 bg-white text-zinc-700 hover:border-rose-200 hover:bg-rose-50/30'
+                      ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 font-bold ring-1 ring-rose-500'
+                      : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-rose-200 hover:bg-rose-50/30 dark:hover:bg-zinc-750'
                     }`}
                 >
-                  <div className="relative h-4 w-4 overflow-hidden rounded-full border border-zinc-200">
+                  <div className="relative h-4 w-4 overflow-hidden rounded-full border border-zinc-200 dark:border-zinc-750">
                     <Image src={member.image} alt={member.displayName} fill className="object-cover" sizes="16px" />
                   </div>
                   <span>{member.displayName}</span>
@@ -264,8 +264,8 @@ export default function CreatePostModal({
 
           {/* 3. Title (Optional for short notes, helpful for stories/art) */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 mb-1.5">
-              3. Title <span className="text-[11px] font-normal text-zinc-400">({category === 'Appreciation' ? 'Optional' : 'Recommended'})</span>
+            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1.5">
+              3. Title <span className="text-[11px] font-normal text-zinc-400 dark:text-zinc-500">({category === 'Appreciation' ? 'Optional' : 'Recommended'})</span>
             </label>
             <input
               type="text"
@@ -278,17 +278,17 @@ export default function CreatePostModal({
                     ? 'e.g., Watercolor portrait of Sunoo'
                     : 'A brief heading or summary...'
               }
-              className="w-full rounded-2xl border border-zinc-200 bg-zinc-50/50 p-3 text-sm text-zinc-900 outline-none focus:border-rose-500 focus:bg-white focus:ring-1 focus:ring-rose-500 transition-all"
+              className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/80 p-3 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-rose-500 focus:bg-white dark:focus:bg-zinc-800 focus:ring-1 focus:ring-rose-500 transition-all"
             />
           </div>
 
           {/* 4. Message Body */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600">
+              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
                 4. Your Message / Story <span className="text-rose-500">*</span>
               </label>
-              <span className="text-[11px] text-zinc-400">{content.length} characters</span>
+              <span className="text-[11px] text-zinc-400 dark:text-zinc-500">{content.length} characters</span>
             </div>
             <textarea
               required
@@ -302,21 +302,21 @@ export default function CreatePostModal({
                     ? 'Share your personal story and how their music or character touched your life...'
                     : 'Describe your creative project or thought...'
               }
-              className="w-full rounded-2xl border border-zinc-200 bg-zinc-50/50 p-3.5 text-sm text-zinc-900 outline-none focus:border-rose-500 focus:bg-white focus:ring-1 focus:ring-rose-500 resize-none transition-all"
+              className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/80 p-3.5 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-rose-500 focus:bg-white dark:focus:bg-zinc-800 focus:ring-1 focus:ring-rose-500 resize-none transition-all"
             />
           </div>
 
           {/* Moderation / Auth Error Alert */}
           {moderationError && (
-            <div className="flex items-start gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-800 animate-in fade-in">
+            <div className="flex items-start gap-2.5 rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/40 p-3.5 text-xs text-amber-800 dark:text-amber-200 animate-in fade-in">
               <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="font-bold">{!session?.user ? 'Authentication Required' : 'Guidelines Notice'}</p>
-                <p className="mt-0.5 text-amber-700">{moderationError}</p>
+                <p className="mt-0.5 text-amber-700 dark:text-amber-300">{moderationError}</p>
                 {!session?.user && (
                   <a
                     href="/login"
-                    className="mt-2 inline-flex items-center gap-1 font-bold text-rose-600 hover:text-rose-700 underline"
+                    className="mt-2 inline-flex items-center gap-1 font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 underline"
                   >
                     Go to Sign In &rarr;
                   </a>
@@ -326,7 +326,7 @@ export default function CreatePostModal({
           )}
 
           {/* Guidelines Mini Reminder */}
-          <div className="flex items-center gap-2 rounded-2xl bg-zinc-50 p-3 text-xs text-zinc-500 border border-zinc-100">
+          <div className="flex items-center gap-2 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 p-3 text-xs text-zinc-500 dark:text-zinc-400 border border-zinc-100 dark:border-zinc-800">
             <ShieldCheck className="h-4 w-4 text-rose-500 flex-shrink-0" />
             <span>Reminder: All submissions must be respectful and free of negative comparisons or attacks.</span>
           </div>
@@ -336,7 +336,7 @@ export default function CreatePostModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl px-5 py-2.5 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 transition-colors"
+              className="rounded-xl px-5 py-2.5 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
             >
               Cancel
             </button>

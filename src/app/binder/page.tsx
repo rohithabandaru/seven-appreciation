@@ -6,6 +6,7 @@ import Footer from '@/components/layout/Footer';
 import Toast from '@/components/ui/Toast';
 import Photocard3D from '@/components/binder/Photocard3D';
 import PackOpeningModal from '@/components/binder/PackOpeningModal';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 import { PHOTOCARDS_DATA, Photocard } from '@/lib/data/photocardsData';
 import { MEMBERS_DATA } from '@/lib/data/membersData';
 import { useSession } from 'next-auth/react';
@@ -318,26 +319,28 @@ export default function BinderPage() {
 
             {/* Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 justify-items-center">
-              {filteredCards.map((card) => {
+              {filteredCards.map((card, idx) => {
                 const isUnlocked = unlockedCardIds.has(card.id);
                 return (
-                  <div key={card.id} className="flex flex-col items-center space-y-2">
-                    <Photocard3D
-                      card={card}
-                      isUnlocked={isUnlocked}
-                      size="md"
-                      isWishlisted={wishlistCardIds.has(card.id)}
-                      onWishlistToggle={() => handleWishlistToggle(card.id)}
-                    />
-                    {isUnlocked && (
-                      <div className="text-center mt-1">
-                        <span className="text-xs font-bold text-zinc-800 block truncate max-w-[180px]">
-                          {card.cardName}
-                        </span>
-                        <span className="text-[10px] text-zinc-400">{card.era}</span>
-                      </div>
-                    )}
-                  </div>
+                  <ScrollReveal key={card.id} direction="up" delay={(idx % 8) * 60}>
+                    <div className="flex flex-col items-center space-y-2">
+                      <Photocard3D
+                        card={card}
+                        isUnlocked={isUnlocked}
+                        size="md"
+                        isWishlisted={wishlistCardIds.has(card.id)}
+                        onWishlistToggle={() => handleWishlistToggle(card.id)}
+                      />
+                      {isUnlocked && (
+                        <div className="text-center mt-1">
+                          <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 block truncate max-w-[180px]">
+                            {card.cardName}
+                          </span>
+                          <span className="text-[10px] text-zinc-400">{card.era}</span>
+                        </div>
+                      )}
+                    </div>
+                  </ScrollReveal>
                 );
               })}
             </div>

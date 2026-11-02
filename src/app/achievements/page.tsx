@@ -234,7 +234,7 @@ export default function AchievementsPage() {
                   : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-amber-50 hover:border-amber-200'
               }`}
             >
-              <div className="relative h-4 w-4 overflow-hidden rounded-full"><Image src={m.image} alt={m.displayName} fill className="object-cover" sizes="16px" /></div>
+              <div className="relative h-4 w-4 overflow-hidden rounded-full"><Image src={m.image} alt={m.displayName} fill className="object-cover" style={{ objectPosition: m.imagePosition || 'center 18%' }} sizes="16px" /></div>
               <span>{m.displayName}</span>
             </button>
           ))}
@@ -550,7 +550,7 @@ function AddMilestoneModal({
                         : 'border-zinc-200 bg-white hover:border-amber-300'
                     }`}
                   >
-                    <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-white shadow-xs"><Image src={m.image} alt={m.displayName} fill className="object-cover" sizes="40px" /></div>
+                    <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-white shadow-xs"><Image src={m.image} alt={m.displayName} fill className="object-cover" style={{ objectPosition: m.imagePosition || 'center 18%' }} sizes="40px" /></div>
                     <span className="text-[9px] font-bold text-zinc-700 truncate w-full text-center">
                       {m.displayName}
                     </span>

@@ -50,7 +50,7 @@ export default function SearchPage() {
         (m) =>
           m.displayName.toLowerCase().includes(trimmed) ||
           m.name.toLowerCase().includes(trimmed) ||
-          m.role.toLowerCase().includes(trimmed)
+          (m.role ? m.role.toLowerCase().includes(trimmed) : false)
       )
     : [];
 
@@ -107,7 +107,7 @@ export default function SearchPage() {
                       </div>
                       <div>
                         <h4 className="text-xs font-bold text-zinc-900 dark:text-white">{m.displayName}</h4>
-                        <span className="text-[10px] text-rose-500">{m.role}</span>
+                        {m.role && <span className="text-[10px] text-rose-500">{m.role}</span>}
                       </div>
                     </Link>
                   ))}

@@ -13,6 +13,7 @@ import { MEMBERS_DATA } from '@/lib/data/membersData';
 import { AppreciationMessage, MemberPhoto, Post, Letter } from '@/types';
 import Toast from '@/components/ui/Toast';
 import ReportModal from '@/components/ui/ReportModal';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 import { checkContentModeration } from '@/lib/moderation';
 import { uploadFile, validateFileClient } from '@/lib/upload/client';
 import { 
@@ -467,11 +468,17 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
 
       <main className="flex-1">
         {/* MEMBER HERO HEADER */}
-        <section className="relative overflow-hidden border-b border-rose-100 bg-gradient-to-b from-rose-50/70 via-amber-50/40 to-[#FFFDF9] py-16 px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-6xl space-y-6">
+        <section className="relative overflow-hidden border-b border-rose-100/80 dark:border-rose-950/40 bg-gradient-to-b from-rose-50/70 via-amber-50/40 to-[#FFFDF9] dark:from-[#18131B] dark:via-[#121014] dark:to-[#121014] py-16 px-4 sm:px-6 lg:px-8">
+          {/* Ambient Glowing Aura */}
+          <div
+            className={`pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-gradient-to-br ${member.colorGradient} blur-3xl opacity-40 animate-float-orb`}
+            aria-hidden="true"
+          />
+
+          <div className="relative z-10 mx-auto max-w-6xl space-y-6">
             <Link
               href="/members"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:underline"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               <span>Back to All Members</span>
@@ -488,62 +495,66 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-              {/* Member Image Card */}
-              <div className="relative h-96 rounded-3xl overflow-hidden shadow-2xl border-2 border-white group">
-                <Image src={member.image} alt={member.displayName} fill priority className="object-cover transition-transform duration-700 group-hover:scale-105" sizes="(max-width: 768px) 100vw, 33vw" />
-                <div className={`absolute inset-0 bg-gradient-to-t ${member.colorGradient} opacity-30`} />
-                <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-white/90 p-3 backdrop-blur-md text-xs shadow-md">
-                  <span className="font-bold text-zinc-900 block">{member.name}</span>
-                  <span className="text-zinc-500">{member.koreanName} • {member.birthDate}</span>
+            <ScrollReveal direction="up" delay={50}>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+                {/* Member Image Card */}
+                <div className="relative h-96 rounded-3xl overflow-hidden shadow-2xl border-2 border-white group">
+                  <Image src={member.image} alt={member.displayName} fill priority className="object-cover transition-transform duration-700 group-hover:scale-105" style={{ objectPosition: member.imagePosition || 'center 18%' }} sizes="(max-width: 768px) 100vw, 33vw" />
+                  <div className={`absolute inset-0 bg-gradient-to-t ${member.colorGradient} opacity-30`} />
+                  <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-white/90 p-3 backdrop-blur-md text-xs shadow-md">
+                    <span className="font-bold text-zinc-900 block">{member.name}</span>
+                    <span className="text-zinc-500">{member.koreanName} • {member.birthDate}</span>
+                  </div>
                 </div>
-              </div>
 
-              {/* Member Bio & Overview */}
-              <div className="md:col-span-2 space-y-5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-rose-100/80 px-3.5 py-1 text-xs font-bold text-rose-700">
-                    <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                    <span>{member.role}</span>
+                {/* Member Bio & Overview */}
+                <div className="md:col-span-2 space-y-5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {member.role ? (
+                      <div className="inline-flex items-center gap-2 rounded-full bg-rose-100/80 px-3.5 py-1 text-xs font-bold text-rose-700">
+                        <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                        <span>{member.role}</span>
+                      </div>
+                    ) : null}
+
+                    <button
+                      onClick={() => setActiveTab('photos')}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-white px-3 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50 shadow-2xs transition-colors"
+                    >
+                      <Camera className="h-3.5 w-3.5" />
+                      <span>{photos.length} Photos in Gallery</span>
+                    </button>
                   </div>
 
-                  <button
-                    onClick={() => setActiveTab('photos')}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-white px-3 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50 shadow-2xs transition-colors"
-                  >
-                    <Camera className="h-3.5 w-3.5" />
-                    <span>{photos.length} Photos in Gallery</span>
-                  </button>
-                </div>
+                  <h1 className="text-4xl sm:text-6xl font-extrabold text-zinc-900 tracking-tight">
+                    {member.displayName}
+                  </h1>
 
-                <h1 className="text-4xl sm:text-6xl font-extrabold text-zinc-900 tracking-tight">
-                  {member.displayName}
-                </h1>
+                  <blockquote className="border-l-4 border-rose-500 pl-4 italic text-base sm:text-lg text-zinc-700 font-serif bg-white/70 p-4 rounded-r-2xl border border-rose-100 shadow-2xs">
+                    &quot;{member.quote}&quot;
+                  </blockquote>
 
-                <blockquote className="border-l-4 border-rose-500 pl-4 italic text-base sm:text-lg text-zinc-700 font-serif bg-white/70 p-4 rounded-r-2xl border border-rose-100 shadow-2xs">
-                  &quot;{member.quote}&quot;
-                </blockquote>
+                  <p className="text-sm text-zinc-600 leading-relaxed">{member.bio}</p>
 
-                <p className="text-sm text-zinc-600 leading-relaxed">{member.bio}</p>
-
-                {/* Official Links */}
-                <div className="flex flex-wrap items-center gap-3 pt-2">
-                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Official Channels:</span>
-                  {member.officialLinks.map((link, idx) => (
-                    <a
-                      key={idx}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:border-rose-300 hover:text-rose-600 shadow-2xs transition-colors"
-                    >
-                      <span>{link.label}</span>
-                      <ExternalLink className="h-3 w-3 text-zinc-400" />
-                    </a>
-                  ))}
+                  {/* Official Links */}
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Official Channels:</span>
+                    {member.officialLinks.map((link, idx) => (
+                      <a
+                        key={idx}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:border-rose-300 hover:text-rose-600 shadow-2xs transition-colors"
+                      >
+                        <span>{link.label}</span>
+                        <ExternalLink className="h-3 w-3 text-zinc-400" />
+                      </a>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            </ScrollReveal>
           </div>
         </section>
 

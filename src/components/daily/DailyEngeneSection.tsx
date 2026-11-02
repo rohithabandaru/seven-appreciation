@@ -4,8 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import UserAvatar from '@/components/ui/UserAvatar';
-import { BADGE_DEFINITIONS } from '@/lib/badge-definitions';
-import type { BadgeDefinition, BadgeType } from '@/types';
+import type { BadgeDefinition } from '@/types';
 import {
   Sunrise,
   Flame,
@@ -19,6 +18,8 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
+
+import { motion } from 'framer-motion';
 
 interface TodayData {
   prompt: {
@@ -51,7 +52,7 @@ interface TodayData {
 }
 
 export default function DailyEngeneSection() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [todayData, setTodayData] = useState<TodayData | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
@@ -74,6 +75,7 @@ export default function DailyEngeneSection() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchToday();
   }, [fetchToday]);
 
@@ -168,14 +170,14 @@ export default function DailyEngeneSection() {
       )}
 
       {/* Daily ENGENE Section */}
-      <div className="rounded-2xl border border-amber-200/60 bg-gradient-to-br from-amber-50/80 via-rose-50/50 to-purple-50/40 p-5 sm:p-6 mb-4 space-y-4 shadow-sm">
+      <div className="rounded-2xl border border-amber-200/60 dark:border-zinc-800 bg-gradient-to-br from-amber-50/80 via-rose-50/50 to-purple-50/40 dark:from-zinc-900/90 dark:via-zinc-900/90 dark:to-zinc-900/90 p-5 sm:p-6 mb-4 space-y-4 shadow-sm">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sunrise className="h-5 w-5 text-amber-500" />
-            <h2 className="text-sm sm:text-base font-black text-zinc-900">Today&apos;s ENGENE Moment</h2>
+            <h2 className="text-sm sm:text-base font-black text-zinc-900 dark:text-white">Today&apos;s ENGENE Moment</h2>
             {prompt.category && (
-              <span className="hidden sm:inline-flex rounded-full bg-amber-100 border border-amber-200 px-2.5 py-0.5 text-[10px] font-bold text-amber-700">
+              <span className="hidden sm:inline-flex rounded-full bg-amber-100 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900/50 px-2.5 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
                 {prompt.category}
               </span>
             )}
@@ -183,7 +185,7 @@ export default function DailyEngeneSection() {
 
           {/* Streak Badge */}
           {isAuthenticated && streak.currentStreak > 0 && (
-            <div className="flex items-center gap-1 rounded-full bg-orange-100 border border-orange-200 px-2.5 py-1 text-[11px] font-bold text-orange-700">
+            <div className="flex items-center gap-1 rounded-full bg-orange-100 dark:bg-orange-950/50 border border-orange-200 dark:border-orange-900/50 px-2.5 py-1 text-[11px] font-bold text-orange-700 dark:text-orange-300">
               <Flame className="h-3.5 w-3.5" />
               <span>{streak.currentStreak} day{streak.currentStreak !== 1 ? 's' : ''}</span>
             </div>
@@ -191,7 +193,7 @@ export default function DailyEngeneSection() {
         </div>
 
         {/* Prompt Question */}
-        <p className="text-sm sm:text-base font-semibold text-zinc-800 leading-relaxed italic">
+        <p className="text-sm sm:text-base font-semibold text-zinc-800 dark:text-zinc-200 leading-relaxed italic">
           &ldquo;{prompt.question}&rdquo;
         </p>
 
@@ -214,18 +216,18 @@ export default function DailyEngeneSection() {
                 }}
                 placeholder="Share your warm thoughts..."
                 rows={3}
-                className="w-full rounded-2xl border border-amber-200 bg-white/80 p-4 text-sm text-zinc-800 placeholder-zinc-400 resize-none focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200/50 transition-all"
+                className="w-full rounded-2xl border border-amber-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-800/80 p-4 text-sm text-zinc-800 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 resize-none focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200/50 transition-all"
                 disabled={submitting}
               />
               <span
-                className={`absolute bottom-3 right-3 text-[10px] font-bold ${charsLeft < 50 ? 'text-rose-500' : 'text-zinc-300'}`}
+                className={`absolute bottom-3 right-3 text-[10px] font-bold ${charsLeft < 50 ? 'text-rose-500' : 'text-zinc-300 dark:text-zinc-600'}`}
               >
                 {charsLeft}
               </span>
             </div>
 
             {error && (
-              <p className="text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">
+              <p className="text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 rounded-xl px-3 py-2">
                 {error}
               </p>
             )}
@@ -233,7 +235,7 @@ export default function DailyEngeneSection() {
             <button
               type="submit"
               disabled={!message.trim() || submitting}
-              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 via-rose-500 to-purple-500 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:opacity-90 disabled:opacity-50 transition-all"
+              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 via-rose-500 to-purple-500 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
             >
               {submitting ? (
                 <>
@@ -263,26 +265,32 @@ export default function DailyEngeneSection() {
 
         {/* Completed State */}
         {completed && userResponse && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-emerald-700">
+          <motion.div
+            initial={{ opacity: 0, rotateX: 60, y: 20 }}
+            animate={{ opacity: 1, rotateX: 0, y: 0 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 200 }}
+            style={{ perspective: '1000px', transformStyle: 'preserve-3d' }}
+            className="space-y-3"
+          >
+            <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
               <CheckCircle className="h-4 w-4" />
               <span className="text-xs font-bold">You checked in today 🤍</span>
             </div>
 
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 text-sm text-zinc-700 leading-relaxed">
+            <div className="rounded-2xl border border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/50 dark:bg-emerald-950/30 p-4 text-sm text-zinc-700 dark:text-zinc-200 leading-relaxed shadow-xs">
               &ldquo;{userResponse.message}&rdquo;
             </div>
 
             {/* Streak info */}
             {streak.currentStreak > 0 && (
-              <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold text-zinc-600">
-                <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 border border-orange-200 px-2.5 py-1 text-orange-700">
+              <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold text-zinc-600 dark:text-zinc-300">
+                <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 dark:bg-orange-950/50 border border-orange-200 dark:border-orange-900/50 px-2.5 py-1 text-orange-700 dark:text-orange-300">
                   <Flame className="h-3 w-3" /> {streak.currentStreak} day streak
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 border border-purple-200 px-2.5 py-1 text-purple-700">
+                <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-900/50 px-2.5 py-1 text-purple-700 dark:text-purple-300">
                   🏆 Best: {streak.longestStreak}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 border border-zinc-200 px-2.5 py-1 text-zinc-600">
+                <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1 text-zinc-600 dark:text-zinc-300">
                   Total: {streak.totalCheckIns}
                 </span>
               </div>
@@ -296,7 +304,7 @@ export default function DailyEngeneSection() {
               <BookOpen className="h-3.5 w-3.5" />
               <span>💌 Give Me Something to Read</span>
             </Link>
-          </div>
+          </motion.div>
         )}
 
         {/* Community Responses Toggle */}
@@ -304,25 +312,25 @@ export default function DailyEngeneSection() {
           <div>
             <button
               onClick={() => setShowCommunity(!showCommunity)}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 hover:text-amber-900 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300 transition-colors cursor-pointer"
             >
               {showCommunity ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
               <span>{showCommunity ? 'Hide' : 'See'} community responses</span>
             </button>
 
             {showCommunity && (
-              <div className="mt-3 space-y-2.5 max-h-64 overflow-y-auto rounded-2xl border border-zinc-200 bg-white/60 p-3">
+              <div className="mt-3 space-y-2.5 max-h-64 overflow-y-auto rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-zinc-900/60 p-3">
                 {recentResponses.map((resp) => (
                   <div
                     key={resp.id}
-                    className="flex gap-3 rounded-xl bg-white p-3 border border-zinc-100 shadow-2xs"
+                    className="flex gap-3 rounded-xl bg-white dark:bg-zinc-800 p-3 border border-zinc-100 dark:border-zinc-700/60 shadow-2xs"
                   >
                     <div className="flex-shrink-0 h-7 w-7 rounded-full overflow-hidden">
                       <UserAvatar name={resp.user.name} image={resp.user.image} size={28} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-bold text-zinc-700 mb-0.5">{resp.user.name}</p>
-                      <p className="text-xs text-zinc-600 leading-relaxed">{resp.message}</p>
+                      <p className="text-[11px] font-bold text-zinc-700 dark:text-zinc-200 mb-0.5">{resp.user.name}</p>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">{resp.message}</p>
                     </div>
                   </div>
                 ))}

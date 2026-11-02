@@ -23,7 +23,7 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      data: prompts.map((p: any) => ({
+      data: prompts.map((p) => ({
         id: p.id,
         date: p.date,
         question: p.question,

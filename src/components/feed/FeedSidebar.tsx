@@ -43,6 +43,7 @@ export default function FeedSidebar() {
                 alt={spotlightMember.displayName}
                 fill
                 className="object-cover"
+                style={{ objectPosition: spotlightMember.imagePosition || 'center 18%' }}
                 sizes="56px"
               />
             </div>
@@ -51,9 +52,11 @@ export default function FeedSidebar() {
                 {spotlightMember.displayName}
               </h4>
               <p className="text-xs font-medium text-zinc-500">{spotlightMember.koreanName}</p>
-              <p className="mt-0.5 text-[11px] font-semibold text-rose-600 line-clamp-1">
-                {spotlightMember.role}
-              </p>
+              {spotlightMember.role ? (
+                <p className="mt-0.5 text-[11px] font-semibold text-rose-600 line-clamp-1">
+                  {spotlightMember.role}
+                </p>
+              ) : null}
             </div>
           </div>
 

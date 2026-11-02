@@ -7,11 +7,12 @@ import { getInitials, getAvatarColorClass, isRealUserImage } from '@/lib/avatar'
 interface UserAvatarProps {
   name: string;
   image?: string | null;
+  imagePosition?: string;
   size?: number;
   className?: string;
 }
 
-export default function UserAvatar({ name, image, size = 40, className = '' }: UserAvatarProps) {
+export default function UserAvatar({ name, image, imagePosition, size = 40, className = '' }: UserAvatarProps) {
   const showImage = isRealUserImage(image);
   const initials = getInitials(name || 'User');
   const colorClass = getAvatarColorClass(name || 'User');
@@ -27,6 +28,7 @@ export default function UserAvatar({ name, image, size = 40, className = '' }: U
           alt={name}
           fill
           className="object-cover"
+          style={{ objectPosition: imagePosition || 'center 20%' }}
           sizes={`${size}px`}
         />
       </div>

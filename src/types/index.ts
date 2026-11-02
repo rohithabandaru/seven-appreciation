@@ -43,6 +43,7 @@ export interface Member {
   koreanName: string;
   image: string;
   heroImage: string;
+  imagePosition?: string;
   quote: string;
   role: string;
   birthDate: string;

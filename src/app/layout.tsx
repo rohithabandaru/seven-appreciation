@@ -6,6 +6,9 @@ import AuthProvider from "@/components/providers/AuthProvider";
 import RegisterPWA from "@/components/providers/RegisterPWA";
 import VisitTracker from "@/components/providers/VisitTracker";
 import FloatingCoffee from "@/components/ui/FloatingCoffee";
+import SmoothScrollProvider from "@/components/providers/SmoothScrollProvider";
+import CustomHeartCursor from "@/components/ui/CustomHeartCursor";
+import ParallaxBackgroundBlobs from "@/components/ui/ParallaxBackgroundBlobs";
 import { Analytics } from "@vercel/analytics/next";
 
 const outfit = Outfit({
@@ -21,7 +24,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ||
-      "https://seven-appreciation.vercel.app"
+    "https://seven-appreciation.vercel.app"
   ),
   title: {
     default: "Seven Appreciation — Support Without Attacking Anyone Else",
@@ -112,7 +115,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${outfit.variable} ${outfit.className} h-full antialiased`}
+      className={`${outfit.variable} ${outfit.className} antialiased`}
       suppressHydrationWarning
     >
       <head>
@@ -137,12 +140,16 @@ export default function RootLayout({
           Skip to main content
         </a>
 
-        <AuthProvider>
-          <RegisterPWA />
-          <VisitTracker />
-          <FloatingCoffee />
-          {children}
-        </AuthProvider>
+        <SmoothScrollProvider>
+          <AuthProvider>
+            <RegisterPWA />
+            <VisitTracker />
+            <FloatingCoffee />
+            <CustomHeartCursor />
+            <ParallaxBackgroundBlobs />
+            {children}
+          </AuthProvider>
+        </SmoothScrollProvider>
 
         <Analytics />
 

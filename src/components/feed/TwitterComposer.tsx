@@ -189,12 +189,12 @@ export default function TwitterComposer({
   };
 
   return (
-    <div className={`relative overflow-hidden rounded-3xl border transition-all duration-300 bg-white/95 backdrop-blur-md shadow-xs ${
-      isFocused ? 'border-rose-300 ring-2 ring-rose-100 shadow-md' : 'border-rose-100/80 hover:border-rose-200'
+    <div className={`relative overflow-hidden rounded-3xl border transition-all duration-300 bg-white/95 dark:bg-zinc-900/90 backdrop-blur-md shadow-xs ${
+      isFocused ? 'border-rose-300 dark:border-rose-500/50 ring-2 ring-rose-100 dark:ring-rose-900/40 shadow-md' : 'border-rose-100/80 dark:border-zinc-800 hover:border-rose-200 dark:hover:border-zinc-700'
     }`}>
       {/* Active Prompt Header Banner */}
       {activePrompt && (
-        <div className="flex items-center justify-between bg-amber-50/90 px-4 py-2 text-xs font-semibold text-amber-800 border-b border-amber-200/80">
+        <div className="flex items-center justify-between bg-amber-50/90 dark:bg-amber-950/40 px-4 py-2 text-xs font-semibold text-amber-800 dark:text-amber-200 border-b border-amber-200/80 dark:border-amber-900/40">
           <div className="flex items-center gap-1.5 min-w-0">
             <Sparkles className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
             <span className="truncate">Answering Prompt: &ldquo;{activePrompt}&rdquo;</span>
@@ -203,7 +203,7 @@ export default function TwitterComposer({
             <button
               type="button"
               onClick={onClearPrompt}
-              className="text-amber-600 hover:text-amber-900 ml-2"
+              className="text-amber-600 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 ml-2"
               title="Clear Prompt"
             >
               <X className="h-3.5 w-3.5" />
@@ -230,7 +230,7 @@ export default function TwitterComposer({
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Add a headline / topic (optional)..."
-                    className="w-full mb-2.5 rounded-xl border border-rose-100 bg-rose-50/30 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-zinc-900 placeholder:text-zinc-400 focus:border-rose-300 focus:bg-white focus:outline-none"
+                    className="w-full mb-2.5 rounded-xl border border-rose-100 dark:border-zinc-700 bg-rose-50/30 dark:bg-zinc-800/80 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:border-rose-300 dark:focus:border-rose-500 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none"
                     maxLength={100}
                   />
                 )}
@@ -246,20 +246,20 @@ export default function TwitterComposer({
                   }}
                   placeholder="What's happening? Share thoughts, comeback hype, or fan love..."
                   rows={isFocused ? 3 : 2}
-                  className="w-full resize-none border-0 bg-transparent p-0 text-sm sm:text-base text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-0 leading-relaxed"
+                  className="w-full resize-none border-0 bg-transparent p-0 text-sm sm:text-base text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-0 leading-relaxed"
                   disabled={isSubmitting}
                 />
 
                 {/* Error Message */}
                 {errorMsg && (
-                  <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-rose-600 bg-rose-50/80 p-2 rounded-xl border border-rose-200">
+                  <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-rose-600 bg-rose-50/80 dark:bg-rose-950/50 p-2 rounded-xl border border-rose-200 dark:border-rose-900/60">
                     <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
                     <span>{errorMsg}</span>
                   </div>
                 )}
 
                 {/* Expandable Composer Controls */}
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-rose-100/60 pt-3">
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-rose-100/60 dark:border-zinc-800 pt-3">
                   {/* Left side options: Tag, Category */}
                   <div className="flex flex-wrap items-center gap-2">
                     {/* Title Toggle */}
@@ -267,7 +267,9 @@ export default function TwitterComposer({
                       type="button"
                       onClick={() => setShowTitleInput(!showTitleInput)}
                       className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition-colors border cursor-pointer ${
-                        showTitleInput ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-white text-zinc-600 border-zinc-200/80 hover:bg-zinc-50'
+                        showTitleInput
+                          ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900/60'
+                          : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-750'
                       }`}
                     >
                       <span>Title</span>
@@ -278,7 +280,7 @@ export default function TwitterComposer({
                       <select
                         value={selectedMember}
                         onChange={(e) => setSelectedMember(e.target.value)}
-                        className="rounded-xl border border-zinc-200/80 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-700 focus:border-rose-300 focus:outline-none cursor-pointer"
+                        className="rounded-xl border border-zinc-200/80 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-200 focus:border-rose-300 dark:focus:border-rose-500 focus:outline-none cursor-pointer"
                         title="Tag a member (optional)"
                       >
                         <option value="none">✨ General / All Seven (No Tag)</option>
@@ -294,7 +296,7 @@ export default function TwitterComposer({
                     <select
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value as PostCategory)}
-                      className="rounded-xl border border-zinc-200/80 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-700 focus:border-rose-300 focus:outline-none cursor-pointer"
+                      className="rounded-xl border border-zinc-200/80 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-200 focus:border-rose-300 dark:focus:border-rose-500 focus:outline-none cursor-pointer"
                     >
                       {CATEGORIES.map((cat) => (
                         <option key={cat.id} value={cat.id}>

@@ -110,7 +110,7 @@ export default function FeedPageShell({
         <div className="mx-auto w-full max-w-7xl">
           {header}
 
-          <div className="mt-4 space-y-6">
+          <div id="community-feed-top" className="mt-4 space-y-6 scroll-mt-20">
             <div className="space-y-6">
               
               {/* Twitter / X Style Inline Composer */}
@@ -132,10 +132,10 @@ export default function FeedPageShell({
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-1.5 whitespace-nowrap rounded-2xl px-4 py-2 text-xs font-bold transition-all border cursor-pointer ${
+                        className={`flex items-center gap-1.5 whitespace-nowrap rounded-2xl px-4 py-2 text-xs font-bold transition-all duration-200 border cursor-pointer active:scale-98 ${
                           isActive
-                            ? 'border-rose-500 bg-rose-500 text-white shadow-xs'
-                            : 'border-zinc-200 bg-white text-zinc-600 hover:border-rose-200 hover:bg-rose-50/50'
+                            ? 'border-rose-500 bg-rose-500 text-white shadow-md shadow-rose-500/20 scale-102'
+                            : 'border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 hover:border-rose-200 hover:bg-rose-50/50 dark:hover:bg-zinc-800'
                         }`}
                       >
                         <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-white' : 'text-zinc-400'}`} />
@@ -146,18 +146,18 @@ export default function FeedPageShell({
                 </div>
               )}
 
-              <div className="rounded-2xl border border-rose-100/60 bg-white/70 p-3 shadow-2xs backdrop-blur-sm">
+              <div className="rounded-2xl border border-rose-100/60 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 p-3 shadow-2xs backdrop-blur-md">
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                  <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider pl-1 flex-shrink-0">
+                  <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider pl-1 flex-shrink-0">
                     Filter by:
                   </span>
                   
                   <button
                     onClick={() => setSelectedMember('all')}
-                    className={`rounded-xl px-3 py-1 text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${
+                    className={`rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap transition-all duration-200 border cursor-pointer active:scale-98 ${
                       selectedMember === 'all'
-                        ? 'border-rose-500 bg-rose-50 text-rose-700 font-extrabold ring-1 ring-rose-500'
-                        : 'border-zinc-200 bg-zinc-50 text-zinc-600 hover:bg-zinc-100'
+                        ? 'border-rose-500 bg-rose-500 text-white font-extrabold shadow-sm shadow-rose-500/30 ring-2 ring-rose-500/30'
+                        : 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-750'
                     }`}
                   >
                     ✨ All Seven
@@ -169,13 +169,13 @@ export default function FeedPageShell({
                       <button
                         key={member.slug}
                         onClick={() => setSelectedMember(member.slug)}
-                        className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer ${
+                        className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-semibold whitespace-nowrap transition-all duration-200 border cursor-pointer active:scale-98 ${
                           isSelected
-                            ? 'border-rose-500 bg-rose-50 text-rose-700 font-bold ring-1 ring-rose-500'
-                            : 'border-zinc-200 bg-white text-zinc-700 hover:border-rose-200 hover:bg-rose-50/40'
+                            ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-bold ring-2 ring-rose-500/40 shadow-xs'
+                            : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:border-rose-200 hover:bg-rose-50/40 dark:hover:bg-zinc-800'
                         }`}
                       >
-                        <div className="relative h-4 w-4 overflow-hidden rounded-full border border-zinc-200">
+                        <div className="relative h-4 w-4 overflow-hidden rounded-full border border-zinc-200 dark:border-zinc-700">
                           <Image src={member.image} alt={member.displayName} fill className="object-cover" sizes="16px" />
                         </div>
                         <span>{member.displayName}</span>
@@ -246,10 +246,10 @@ export default function FeedPageShell({
                     )}
                   </>
                 ) : (
-                  <div className="rounded-3xl border border-dashed border-rose-200 bg-white/80 p-12 text-center shadow-xs">
-                    <EmptyIcon className="mx-auto h-12 w-12 text-rose-300 stroke-1" />
-                    <h3 className="mt-3 text-base font-bold text-zinc-800">{emptyTitle}</h3>
-                    <p className="mt-1 text-xs text-zinc-500 max-w-sm mx-auto">
+                  <div className="rounded-3xl border border-dashed border-rose-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 p-12 text-center shadow-xs">
+                    <EmptyIcon className="mx-auto h-12 w-12 text-rose-300 dark:text-rose-400 stroke-1" />
+                    <h3 className="mt-3 text-base font-bold text-zinc-800 dark:text-white">{emptyTitle}</h3>
+                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto">
                       {emptyDesc}
                     </p>
                     <button
