@@ -2,8 +2,9 @@
 
 import dynamic from 'next/dynamic';
 import CanvasLoader from './CanvasLoader';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 
-const MemberRingLazy = dynamic(() => import('./MemberRing'), {
+const MemberRingComponent = dynamic(() => import('./MemberRing'), {
   ssr: false,
   loading: () => (
     <div className="h-[480px] w-full flex items-center justify-center">
@@ -12,4 +13,16 @@ const MemberRingLazy = dynamic(() => import('./MemberRing'), {
   ),
 });
 
-export default MemberRingLazy;
+export default function MemberRingLazy(props: { onFilterMember?: (memberSlug: string) => void }) {
+  return (
+    <ErrorBoundary
+      fallback={
+        <div className="h-[480px] w-full flex items-center justify-center">
+          <CanvasLoader />
+        </div>
+      }
+    >
+      <MemberRingComponent {...props} />
+    </ErrorBoundary>
+  );
+}

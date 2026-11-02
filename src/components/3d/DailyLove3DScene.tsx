@@ -2,7 +2,7 @@
 
 import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Float, Environment } from '@react-three/drei';
+import { Float } from '@react-three/drei';
 import * as THREE from 'three';
 import { useMousePosition } from '@/hooks/useMousePosition';
 import { useDeviceTier } from '@/hooks/useDeviceTier';
@@ -58,35 +58,30 @@ function MiniHeart({ mousePos }: { mousePos: { normalizedX: number; normalizedY:
 
   useFrame((state, delta) => {
     if (!meshRef.current) return;
-    idleRotY.current += delta * 0.45;
+    idleRotY.current += delta * 0.75;
     const t = state.clock.getElapsedTime();
 
-    // Gentle cursor parallax
-    const targetTiltX = -mousePos.normalizedY * 0.25;
-    const targetTiltY = idleRotY.current + mousePos.normalizedX * 0.35;
+    const targetTiltX = -mousePos.normalizedY * 0.45;
+    const targetTiltY = idleRotY.current + mousePos.normalizedX * 0.55;
 
-    meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, targetTiltX, delta * 4);
-    meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetTiltY, delta * 4);
+    meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, targetTiltX, delta * 5);
+    meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetTiltY, delta * 5);
 
-    // Heartbeat pulse (lub-dub)
-    const cycle = (t * 1.2) % 1;
-    let pulse = 0;
-    if (cycle < 0.15) {
-      pulse = Math.sin((cycle / 0.15) * Math.PI) * 0.07;
-    } else if (cycle >= 0.18 && cycle < 0.32) {
-      pulse = Math.sin(((cycle - 0.18) * Math.PI) / 0.14) * 0.04;
-    }
-
-    const currentScale = 0.95 * (1 + pulse);
-    meshRef.current.scale.set(currentScale, currentScale, currentScale);
+    const pulse = 1 + Math.sin(t * 2.8) * 0.045;
+    meshRef.current.scale.set(pulse, pulse, pulse);
 
     if (coreLightRef.current) {
-      coreLightRef.current.intensity = 3.5 + pulse * 12;
+      coreLightRef.current.intensity = 3.5 + Math.sin(t * 2.8) * 1.5;
     }
   });
 
   return (
-    <Float speed={1.8} rotationIntensity={0.25} floatIntensity={0.35} floatingRange={[-0.05, 0.05]}>
+    <Float
+      speed={2.2}
+      rotationIntensity={0.3}
+      floatIntensity={0.5}
+      floatingRange={[-0.1, 0.1]}
+    >
       <pointLight ref={coreLightRef} color="#FF1493" intensity={3.5} distance={5} decay={2} />
       <pointLight position={[0, -0.6, 0.6]} color="#FFAEC9" intensity={3.0} distance={4} decay={1.8} />
       <mesh ref={meshRef} geometry={geometry} material={material} castShadow receiveShadow />
@@ -118,14 +113,12 @@ export default function DailyLove3DScene() {
         camera={{ position: [0, 0, 3.8], fov: 45 }}
         className="w-full h-full"
       >
-        <ambientLight intensity={0.65} color="#FFE4E6" />
+        <ambientLight intensity={0.8} color="#FFE4E6" />
         <directionalLight position={[3, 5, 4]} intensity={2.8} color="#FFD6E0" />
         <directionalLight position={[-3, 2, -2]} intensity={4.5} color="#FF007F" />
         <directionalLight position={[0, -3, 2]} intensity={2.5} color="#FFAEC9" />
-        <Environment preset="dawn" environmentIntensity={1.2} />
         <MiniHeart mousePos={mousePos} />
       </Canvas>
     </div>
   );
 }
-

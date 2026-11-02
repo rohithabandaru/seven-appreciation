@@ -35,15 +35,12 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      isDev
-        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-        : "script-src 'self' 'unsafe-inline'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data: https://fonts.gstatic.com",
-      isDev
-        ? "connect-src 'self' ws: wss: http://localhost:* https://localhost:*"
-        : "connect-src 'self'",
+      "connect-src 'self' ws: wss: https://vitals.vercel-insights.com https://pagead2.googlesyndication.com https://*.google.com https://*.googlesyndication.com",
+      "frame-src 'self' https://googleads.g.doubleclick.net https://*.google.com https://*.googlesyndication.com",
       "frame-ancestors 'self'",
       "base-uri 'self'",
       "form-action 'self'",
