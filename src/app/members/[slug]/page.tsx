@@ -647,14 +647,14 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
               {/* MESSAGES LIST */}
               <div className="space-y-6">
                 <div className="flex flex-wrap items-center justify-between gap-4">
-                  <h3 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
+                  <h3 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                     <MessageSquare className="h-5 w-5 text-rose-500" />
                     <span>Warm Messages From the Community ({appreciations.length})</span>
                   </h3>
                   <select 
                     value={appreciationSort} 
                     onChange={(e) => setAppreciationSort(e.target.value as 'newest' | 'most_liked')}
-                    className="rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-bold text-zinc-600 focus:border-rose-500 focus:outline-hidden cursor-pointer"
+                    className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs font-bold text-zinc-600 dark:text-zinc-200 focus:border-rose-500 focus:outline-hidden cursor-pointer"
                   >
                     <option value="newest">Newest First</option>
                     <option value="most_liked">Most Liked</option>
@@ -715,7 +715,7 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
               {/* Header & Actions */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
+                  <h3 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                     <Camera className="h-5 w-5 text-rose-500" />
                     <span>{member.displayName}&apos;s Visual Gallery</span>
                   </h3>
@@ -837,7 +837,7 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
           {activeTab === 'letters' && (
             <div className="space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-4">
-                <h3 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
+                <h3 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                   <Mail className="h-5 w-5 text-rose-500" />
                   <span>Letters to {member.displayName}</span>
                 </h3>
@@ -868,7 +868,7 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {sortedLetters.map((letter) => (
                     <div key={letter.id} className="rounded-3xl border border-rose-100 bg-white p-6 shadow-sm space-y-4">
-                      <h4 className="text-lg font-bold text-zinc-900">{letter.title}</h4>
+                      <h4 className="text-lg font-bold text-zinc-900 dark:text-white">{letter.title}</h4>
                       {letter.imageUrl && (
                         <div className="aspect-video w-full overflow-hidden rounded-xl bg-zinc-100">
                           <Image src={letter.imageUrl} alt={letter.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
@@ -896,7 +896,7 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
           {activeTab === 'posts' && (
             <div className="space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-4">
-                <h3 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
+                <h3 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                   <FileText className="h-5 w-5 text-rose-500" />
                   <span>Explore {member.displayName}</span>
                 </h3>
@@ -924,7 +924,7 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
                           {post.type || post.category}
                         </span>
                       </div>
-                      <h4 className="text-lg font-bold text-zinc-900">{post.title}</h4>
+                      <h4 className="text-lg font-bold text-zinc-900 dark:text-white">{post.title}</h4>
                       <p className="text-sm text-zinc-700 whitespace-pre-line">{post.content}</p>
                       
                       <div className="flex items-center gap-2 pt-4 border-t border-zinc-100">
@@ -948,7 +948,7 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
           {/* TAB 5: JOURNEY & MILESTONES */}
           {activeTab === 'journey' && (
             <div className="space-y-6 max-w-3xl">
-              <h3 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-rose-500" />
                 <span>Career Journey & Key Milestones</span>
               </h3>
@@ -960,7 +960,7 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
                     <span className="inline-block rounded-lg bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-600 mb-1">
                       {item.year}
                     </span>
-                    <h4 className="text-base font-bold text-zinc-900">{item.title}</h4>
+                    <h4 className="text-base font-bold text-zinc-900 dark:text-white">{item.title}</h4>
                     <p className="text-xs text-zinc-600 leading-relaxed mt-1">{item.description}</p>
                   </div>
                 ))}
@@ -971,7 +971,7 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
           {/* TAB 4: VERIFIED ACHIEVEMENTS */}
           {activeTab === 'achievements' && (
             <div className="space-y-6">
-              <h3 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                 <Award className="h-5 w-5 text-amber-500" />
                 <span>Verified Public Achievements</span>
               </h3>
@@ -986,7 +986,7 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
                       <span className="text-[10px] text-zinc-400 font-mono">{ach.eventDate}</span>
                     </div>
 
-                    <h4 className="text-base font-bold text-zinc-900">{ach.title}</h4>
+                    <h4 className="text-base font-bold text-zinc-900 dark:text-white">{ach.title}</h4>
                     <p className="text-xs text-zinc-600 leading-relaxed">{ach.description}</p>
 
                     {ach.verifiedSourceUrl && (
@@ -1009,7 +1009,7 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
           {/* TAB 5: INSPIRATION STORIES */}
           {activeTab === 'inspiration' && (
             <div className="space-y-6 max-w-3xl">
-              <h3 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                 <BookOpen className="h-5 w-5 text-rose-500" />
                 <span>Positive Impact & Community Stories</span>
               </h3>
@@ -1137,7 +1137,7 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
           />
           <div className="relative z-10 w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl animate-in zoom-in-95">
             <div className="mb-6 flex items-center justify-between">
-              <h3 className="text-xl font-extrabold text-zinc-900">Write a Letter</h3>
+              <h3 className="text-xl font-extrabold text-zinc-900 dark:text-white">Write a Letter</h3>
               <button 
                 onClick={() => setShowAddLetterModal(false)}
                 className="rounded-full p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors"
@@ -1272,7 +1272,7 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
             <div className="flex items-center justify-between border-b border-rose-100 pb-4">
               <div className="flex items-center gap-2">
                 <Camera className="h-5 w-5 text-rose-500" />
-                <h3 className="text-lg font-extrabold text-zinc-900">
+                <h3 className="text-lg font-extrabold text-zinc-900 dark:text-white">
                   Add Photo to {member.displayName}&apos;s Gallery
                 </h3>
               </div>
