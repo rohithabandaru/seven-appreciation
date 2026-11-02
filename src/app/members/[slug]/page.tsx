@@ -485,7 +485,7 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
             </Link>
 
             <div className="flex items-center justify-between">
-              <div className="bg-white/60 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-2 text-xs font-semibold text-zinc-600 border border-zinc-200/70">
+              <div className="bg-white/60 dark:bg-zinc-800/80 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-2 text-xs font-semibold text-zinc-600 dark:text-zinc-300 border border-zinc-200/70 dark:border-zinc-700">
                 <Sparkles className="h-3.5 w-3.5 text-amber-500" />
                 <span>Share {member.displayName}&apos;s page</span>
               </div>
@@ -501,9 +501,9 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
                 <div className="relative h-96 rounded-3xl overflow-hidden shadow-2xl border-2 border-white group">
                   <Image src={member.image} alt={member.displayName} fill priority className="object-cover transition-transform duration-700 group-hover:scale-105" style={{ objectPosition: member.imagePosition || 'center 18%' }} sizes="(max-width: 768px) 100vw, 33vw" />
                   <div className={`absolute inset-0 bg-gradient-to-t ${member.colorGradient} opacity-30`} />
-                  <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-white/90 p-3 backdrop-blur-md text-xs shadow-md">
-                    <span className="font-bold text-zinc-900 block">{member.name}</span>
-                    <span className="text-zinc-500">{member.koreanName} • {member.birthDate}</span>
+                  <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-white/90 dark:bg-zinc-900/90 p-3 backdrop-blur-md text-xs shadow-md border border-white/20 dark:border-zinc-700">
+                    <span className="font-bold text-zinc-900 dark:text-white block">{member.name}</span>
+                    <span className="text-zinc-500 dark:text-zinc-400">{member.koreanName} • {member.birthDate}</span>
                   </div>
                 </div>
 
@@ -519,33 +519,33 @@ export default function MemberDetailPage({ params }: MemberPageProps) {
 
                     <button
                       onClick={() => setActiveTab('photos')}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-white px-3 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50 shadow-2xs transition-colors"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 dark:border-rose-800 bg-white dark:bg-zinc-800 px-3 py-1 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-zinc-700 shadow-2xs transition-colors"
                     >
                       <Camera className="h-3.5 w-3.5" />
                       <span>{photos.length} Photos in Gallery</span>
                     </button>
                   </div>
 
-                  <h1 className="text-4xl sm:text-6xl font-extrabold text-zinc-900 tracking-tight">
+                  <h1 className="text-4xl sm:text-6xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
                     {member.displayName}
                   </h1>
 
-                  <blockquote className="border-l-4 border-rose-500 pl-4 italic text-base sm:text-lg text-zinc-700 font-serif bg-white/70 p-4 rounded-r-2xl border border-rose-100 shadow-2xs">
+                  <blockquote className="border-l-4 border-rose-500 pl-4 italic text-base sm:text-lg text-zinc-700 dark:text-zinc-100 font-serif bg-white/70 dark:bg-zinc-900/80 p-4 rounded-r-2xl border border-rose-100 dark:border-zinc-800 shadow-2xs">
                     &quot;{member.quote}&quot;
                   </blockquote>
 
-                  <p className="text-sm text-zinc-600 leading-relaxed">{member.bio}</p>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-200 leading-relaxed">{member.bio}</p>
 
                   {/* Official Links */}
                   <div className="flex flex-wrap items-center gap-3 pt-2">
-                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Official Channels:</span>
+                    <span className="text-xs font-bold text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">Official Channels:</span>
                     {member.officialLinks.map((link, idx) => (
                       <a
                         key={idx}
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:border-rose-300 hover:text-rose-600 shadow-2xs transition-colors"
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:border-rose-300 dark:hover:border-rose-500 hover:text-rose-600 dark:hover:text-rose-400 shadow-2xs transition-colors"
                       >
                         <span>{link.label}</span>
                         <ExternalLink className="h-3 w-3 text-zinc-400" />

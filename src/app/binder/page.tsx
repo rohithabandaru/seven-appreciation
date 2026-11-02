@@ -152,7 +152,7 @@ export default function BinderPage() {
 
       <main className="flex-1">
         {/* HERO SECTION */}
-        <section className="relative overflow-hidden border-b border-rose-100 bg-gradient-to-b from-rose-50/80 via-amber-50/50 to-[#FFFDF9] py-14 px-4 sm:px-6 lg:px-8">
+        <section className="relative overflow-hidden border-b border-rose-100 dark:border-zinc-800 bg-gradient-to-b from-rose-50/80 via-amber-50/50 to-[#FFFDF9] dark:from-[#18131B] dark:via-[#121014] dark:to-[#121014] py-14 px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-6xl space-y-6 text-center">
             
             <div className="inline-flex items-center gap-2 rounded-full bg-rose-100/90 border border-rose-200 px-4 py-1.5 text-xs font-bold text-rose-700 shadow-2xs">
@@ -160,14 +160,14 @@ export default function BinderPage() {
               <span>Digital Photocard Collection & Binder</span>
             </div>
 
-            <h1 className="text-4xl sm:text-6xl font-extrabold text-zinc-900 tracking-tight">
+            <h1 className="text-4xl sm:text-6xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
               ENHYPEN{' '}
               <span className="bg-gradient-to-r from-rose-500 via-purple-600 to-amber-500 bg-clip-text text-transparent">
                 Collector Binder
               </span>
             </h1>
 
-            <p className="text-sm sm:text-base text-zinc-600 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-200 max-w-2xl mx-auto leading-relaxed">
               Open daily booster packs to pull rare, holographic, and secret cards of all 7 members. Flip each card to read verified handwritten messages and signatures!
             </p>
 
@@ -183,9 +183,9 @@ export default function BinderPage() {
             </div>
 
             {/* Binder Stats Progress Bar */}
-            <div className="mx-auto max-w-xl rounded-3xl bg-white/90 border border-rose-100 p-5 shadow-sm space-y-3 mt-4">
+            <div className="mx-auto max-w-xl rounded-3xl bg-white/90 dark:bg-zinc-900/90 border border-rose-100 dark:border-zinc-800 p-5 shadow-sm space-y-3 mt-4">
               <div className="flex items-center justify-between text-xs font-bold">
-                <span className="text-zinc-700 flex items-center gap-1.5">
+                <span className="text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5">
                   <Trophy className="h-4 w-4 text-amber-500" />
                   Binder Completion Progress
                 </span>
@@ -212,7 +212,7 @@ export default function BinderPage() {
         </section>
 
         {/* BINDER CONTROLS & FILTER BAR */}
-        <section className="sticky top-16 z-30 border-b border-rose-100 bg-white/95 backdrop-blur-md">
+        <section className="sticky top-16 z-30 border-b border-rose-100 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-4 space-y-3">
             
             {/* Member Filter Tabs */}
@@ -222,7 +222,7 @@ export default function BinderPage() {
                 className={`flex items-center gap-1.5 whitespace-nowrap rounded-2xl px-4 py-2 text-xs font-bold transition-all border ${
                   selectedMember === 'all'
                     ? 'border-rose-500 bg-rose-500 text-white shadow-xs'
-                    : 'border-zinc-200 bg-white text-zinc-600 hover:border-rose-200 hover:bg-rose-50/50'
+                    : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-200 hover:border-rose-200 dark:hover:border-rose-500 hover:bg-rose-50/50 dark:hover:bg-zinc-700'
                 }`}
               >
                 <Layers className="h-3.5 w-3.5" />
@@ -236,7 +236,7 @@ export default function BinderPage() {
                   className={`flex items-center gap-1.5 whitespace-nowrap rounded-2xl px-4 py-2 text-xs font-bold transition-all border ${
                     selectedMember === member.slug
                       ? 'border-rose-500 bg-rose-500 text-white shadow-xs'
-                      : 'border-zinc-200 bg-white text-zinc-600 hover:border-rose-200 hover:bg-rose-50/50'
+                      : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-200 hover:border-rose-200 dark:hover:border-rose-500 hover:bg-rose-50/50 dark:hover:bg-zinc-700'
                   }`}
                 >
                   <span>{member.displayName}</span>
@@ -283,7 +283,7 @@ export default function BinderPage() {
             
             {/* Binder Header Tab */}
             <div className="flex items-center justify-between border-b border-zinc-300/60 pb-4 mb-8">
-              <div className="flex items-center gap-2 text-zinc-800 font-extrabold text-sm sm:text-base">
+              <div className="flex items-center gap-2 text-zinc-800 dark:text-white font-extrabold text-sm sm:text-base">
                 <BookOpen className="h-5 w-5 text-rose-600" />
                 <span>Official 9-Pocket Sleeve Album</span>
               </div>
