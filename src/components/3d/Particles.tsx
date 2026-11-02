@@ -30,9 +30,9 @@ export default function Particles({ count = 44 }: ParticlesProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
-  // 64x64 sphere geometry to completely remove any faceted polygon edges on large particles
+  // 12x12 optimized sphere geometry for high-framerate instancing
   const geometry = useMemo(() => {
-    return new THREE.SphereGeometry(0.12, 64, 64);
+    return new THREE.SphereGeometry(0.12, 12, 12);
   }, []);
 
   // Bright, glossy MeshPhysicalMaterial matching the pink/magenta heart palette

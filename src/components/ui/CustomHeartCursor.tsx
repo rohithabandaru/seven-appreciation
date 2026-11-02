@@ -14,12 +14,12 @@ interface HeartParticle {
 }
 
 const PASTEL_COLORS = [
-  'rgba(244, 63, 94, 0.7)',   // Rose
-  'rgba(245, 158, 11, 0.7)',  // Amber
-  'rgba(168, 85, 247, 0.7)',  // Purple
-  'rgba(236, 72, 153, 0.7)',  // Pink
-  'rgba(59, 130, 246, 0.7)',   // Blue
-  'rgba(16, 185, 129, 0.7)',  // Emerald
+  'rgba(244, 63, 94, 0.7)',
+  'rgba(245, 158, 11, 0.7)',
+  'rgba(168, 85, 247, 0.7)',
+  'rgba(236, 72, 153, 0.7)',
+  'rgba(59, 130, 246, 0.7)',
+  'rgba(16, 185, 129, 0.7)',
 ];
 
 export default function CustomHeartCursor() {
@@ -46,9 +46,10 @@ export default function CustomHeartCursor() {
     };
     window.addEventListener('resize', onResize, { passive: true });
 
-    let particles: HeartParticle[] = [];
+    const particles: HeartParticle[] = [];
     let lastSpawn = 0;
-    let animId: number;
+    let animId: number | null = null;
+    let isLooping = false;
 
     const drawHeart = (
       context: CanvasRenderingContext2D,
@@ -65,7 +66,6 @@ export default function CustomHeartCursor() {
       context.globalAlpha = Math.max(0, opacity);
       context.fillStyle = color;
 
-      // Draw SVG-like heart path
       const scale = size / 24;
       context.scale(scale, scale);
       context.beginPath();
@@ -78,33 +78,6 @@ export default function CustomHeartCursor() {
       context.restore();
     };
 
-    const handleMouseMove = (e: MouseEvent) => {
-      if (cursorRef.current) {
-        cursorRef.current.style.transform = `translate3d(${e.clientX - 8}px, ${e.clientY - 8}px, 0)`;
-      }
-
-      const now = performance.now();
-      if (now - lastSpawn > 50) {
-        lastSpawn = now;
-        particles.push({
-          x: e.clientX,
-          y: e.clientY - 6,
-          size: Math.random() * 6 + 10,
-          color: PASTEL_COLORS[Math.floor(Math.random() * PASTEL_COLORS.length)],
-          driftX: (Math.random() - 0.5) * 1.5,
-          rotation: (Math.random() - 0.5) * 30,
-          opacity: 0.85,
-        });
-
-        if (particles.length > 20) {
-          particles.shift();
-        }
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-
-    // 0 React re-renders, 100% smooth GPU loop
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
@@ -112,7 +85,7 @@ export default function CustomHeartCursor() {
         const p = particles[i];
         p.y -= 1.1;
         p.x += p.driftX;
-        p.opacity -= 0.035;
+        p.opacity -= 0.04;
 
         if (p.opacity <= 0) {
           particles.splice(i, 1);
@@ -121,15 +94,54 @@ export default function CustomHeartCursor() {
         }
       }
 
-      animId = requestAnimationFrame(render);
+      // Automatically stop RAF loop when there are no particles to draw — saves battery and CPU!
+      if (particles.length > 0) {
+        animId = requestAnimationFrame(render);
+      } else {
+        isLooping = false;
+        animId = null;
+      }
     };
 
-    animId = requestAnimationFrame(render);
+    const startLoopIfNeeded = () => {
+      if (!isLooping) {
+        isLooping = true;
+        animId = requestAnimationFrame(render);
+      }
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (cursorRef.current) {
+        cursorRef.current.style.transform = `translate3d(${e.clientX - 8}px, ${e.clientY - 8}px, 0)`;
+      }
+
+      const now = performance.now();
+      if (now - lastSpawn > 60) {
+        lastSpawn = now;
+        particles.push({
+          x: e.clientX,
+          y: e.clientY - 6,
+          size: Math.random() * 5 + 9,
+          color: PASTEL_COLORS[Math.floor(Math.random() * PASTEL_COLORS.length)],
+          driftX: (Math.random() - 0.5) * 1.2,
+          rotation: (Math.random() - 0.5) * 25,
+          opacity: 0.8,
+        });
+
+        if (particles.length > 15) {
+          particles.shift();
+        }
+
+        startLoopIfNeeded();
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
     return () => {
       window.removeEventListener('resize', onResize);
       window.removeEventListener('mousemove', handleMouseMove);
-      cancelAnimationFrame(animId);
+      if (animId) cancelAnimationFrame(animId);
     };
   }, [prefersReducedMotion]);
 
@@ -137,10 +149,8 @@ export default function CustomHeartCursor() {
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden" aria-hidden="true">
-      {/* Canvas for heart trail — zero React re-render overhead */}
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
 
-      {/* Main glowing cursor heart */}
       <div
         ref={cursorRef}
         className="fixed top-0 left-0 w-4 h-4 will-change-transform pointer-events-none hidden md:block"

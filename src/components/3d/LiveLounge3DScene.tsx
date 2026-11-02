@@ -240,11 +240,11 @@ function MainLiveHeart({
     const extrudeSettings: THREE.ExtrudeGeometryOptions = {
       depth: 0.4,
       bevelEnabled: true,
-      bevelSegments: 18,
+      bevelSegments: 5,
       steps: 1,
       bevelSize: 0.2,
       bevelThickness: 0.2,
-      curveSegments: 36,
+      curveSegments: 18,
     };
 
     const geom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
@@ -510,7 +510,7 @@ export default function LiveLounge3DScene({ burstTrigger = 0 }: LiveLounge3DScen
     >
       <Canvas
         camera={{ position: [0, 0, 4.6], fov: 44 }}
-        dpr={isLowEnd ? [1, 1] : [1, 1.8]}
+        dpr={isLowEnd ? [1, 1] : [1, 1.25]}
         gl={{
           antialias: !isLowEnd,
           alpha: true,

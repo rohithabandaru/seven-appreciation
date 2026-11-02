@@ -33,7 +33,7 @@ export default function TiltCard({
   const scale = useSpring(1, springConfig);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (prefersReducedMotion || !cardRef.current) return;
+    if (prefersReducedMotion || maxTilt === 0 || !cardRef.current) return;
 
     const rect = cardRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;

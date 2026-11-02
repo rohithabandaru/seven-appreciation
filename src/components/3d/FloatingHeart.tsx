@@ -37,11 +37,11 @@ export default function FloatingHeart({
     const extrudeSettings: THREE.ExtrudeGeometryOptions = {
       depth: 0.38,
       bevelEnabled: true,
-      bevelSegments: 24,
-      steps: 2,
-      bevelSize: 0.22,
-      bevelThickness: 0.22,
-      curveSegments: 48,
+      bevelSegments: 6,
+      steps: 1,
+      bevelSize: 0.2,
+      bevelThickness: 0.2,
+      curveSegments: 20,
     };
 
     const geom = new THREE.ExtrudeGeometry(shape, extrudeSettings);

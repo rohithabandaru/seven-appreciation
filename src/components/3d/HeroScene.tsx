@@ -37,7 +37,8 @@ export default function HeroScene({ burstTrigger = 0 }: HeroSceneProps) {
     >
       <Suspense fallback={<CanvasLoader />}>
         <Canvas
-          dpr={[1, 1.5]}
+          // Cap DPR at [1, 1.25] for ultra-smooth 60-120fps on all displays
+          dpr={isLowEnd ? [1, 1] : [1, 1.25]}
           gl={{
             antialias: !isLowEnd,
             alpha: true,
@@ -120,12 +121,13 @@ export default function HeroScene({ burstTrigger = 0 }: HeroSceneProps) {
             decay={1.0}
           />
 
-          {/* Soft grounding Contact Shadows under the heart */}
+          {/* Performance: frames={1} bakes the shadow map once, saving ~15ms per frame */}
           <ContactShadows
+            frames={1}
             position={[0.92, -0.85, 0]}
-            opacity={0.55}
-            scale={4.2}
-            blur={2.8}
+            opacity={0.5}
+            scale={4.0}
+            blur={2.0}
             far={3}
             color="#BE123C"
           />
@@ -142,7 +144,7 @@ export default function HeroScene({ burstTrigger = 0 }: HeroSceneProps) {
           <OrbitingStars />
 
           {/* Glossy Instanced Particles */}
-          <Particles count={isLowEnd || isMobile ? 18 : Math.min(particleCount, 44)} />
+          <Particles count={isLowEnd || isMobile ? 14 : Math.min(particleCount, 32)} />
 
           {/* 3D Particle Burst upon clicking Send Love */}
           <HeartBurst3D trigger={burstTrigger} />

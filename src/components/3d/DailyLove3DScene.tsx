@@ -27,11 +27,11 @@ function MiniHeart({ mousePos }: { mousePos: { normalizedX: number; normalizedY:
     const extrudeSettings: THREE.ExtrudeGeometryOptions = {
       depth: 0.36,
       bevelEnabled: true,
-      bevelSegments: 18,
+      bevelSegments: 4,
       steps: 1,
       bevelSize: 0.2,
       bevelThickness: 0.2,
-      curveSegments: 36,
+      curveSegments: 16,
     };
 
     const geom = new THREE.ExtrudeGeometry(shape, extrudeSettings);

@@ -33,7 +33,7 @@ export default function MemberRing({ onFilterMember }: MemberRingProps) {
   const [activeModalMember, setActiveModalMember] = useState<Member | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [stageTilt, setStageTilt] = useState({ x: 0, y: 0 });
+  const stageRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotion();
 
   const dragStartX = useRef(0);
@@ -89,15 +89,14 @@ export default function MemberRing({ onFilterMember }: MemberRingProps) {
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    // Parallax stage tilt tracking when hovering
-    if (!prefersReducedMotion) {
+    // Parallax stage tilt tracking via DOM ref — 0 React re-renders!
+    if (!prefersReducedMotion && stageRef.current) {
       const rect = e.currentTarget.getBoundingClientRect();
       const nx = (e.clientX - rect.left) / rect.width - 0.5;
       const ny = (e.clientY - rect.top) / rect.height - 0.5;
-      setStageTilt({
-        x: -ny * 9, // vertical tilt up/down up to ±4.5 deg
-        y: nx * 14, // horizontal tilt left/right up to ±7 deg
-      });
+      const tiltX = -ny * 7;
+      const tiltY = nx * 10;
+      stageRef.current.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
     }
 
     if (!isDragging) return;
@@ -128,7 +127,9 @@ export default function MemberRing({ onFilterMember }: MemberRingProps) {
 
   const handleStageMouseLeave = () => {
     setIsHovered(false);
-    setStageTilt({ x: 0, y: 0 });
+    if (stageRef.current) {
+      stageRef.current.style.transform = 'rotateX(0deg) rotateY(0deg)';
+    }
   };
 
   useEffect(() => {
@@ -193,10 +194,11 @@ export default function MemberRing({ onFilterMember }: MemberRingProps) {
         }}
       >
         <div
+          ref={stageRef}
           className="relative w-full h-full flex items-center justify-center will-change-transform"
           style={{
             transformStyle: 'preserve-3d',
-            transform: `rotateX(${stageTilt.x}deg) rotateY(${stageTilt.y}deg)`,
+            transform: 'rotateX(0deg) rotateY(0deg)',
             transition: isDragging ? 'none' : 'transform 0.22s ease-out',
           }}
         >
@@ -292,7 +294,7 @@ export default function MemberRing({ onFilterMember }: MemberRingProps) {
                 )}
 
                 <TiltCard
-                  maxTilt={isCenter ? 18 : 6}
+                  maxTilt={isCenter ? 14 : 0}
                   glowAccent={member.accentColor}
                   className={`rounded-3xl border ${
                     isCenter

@@ -38,8 +38,8 @@ export default function OrbitingStars() {
   const groupRef = useRef<THREE.Group>(null);
   const orbMeshes = useRef<(THREE.Mesh | null)[]>([]);
 
-  // 64x64 smooth sphere geometry
-  const sphereGeometry = useMemo(() => new THREE.SphereGeometry(1, 64, 64), []);
+  // 16x16 optimized sphere geometry
+  const sphereGeometry = useMemo(() => new THREE.SphereGeometry(1, 16, 16), []);
 
   const materials = useMemo(() => {
     return MEMBERS_ORBS.map((orb) => {
